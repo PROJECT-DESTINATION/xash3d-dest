@@ -45,6 +45,7 @@ GNU General Public License for more details.
 #include "common/protocol.h"
 
 #define FILE_COPY_SIZE		(1024 * 1024)
+#define NU_BASEDIR			"projdest"
 
 fs_globals_t FI;
 qboolean      fs_ext_path = false;	// attempt to read\write from ./ or ../ pathes
@@ -633,7 +634,7 @@ void FS_InitGameInfo( gameinfo_t *GameInfo, const char *gamedir )
 
 	// filesystem info
 	Q_strncpy( GameInfo->gamefolder, gamedir, sizeof( GameInfo->gamefolder ));
-	Q_strncpy( GameInfo->basedir, "valve", sizeof( GameInfo->basedir ));
+	Q_strncpy( GameInfo->basedir, NU_BASEDIR, sizeof( GameInfo->basedir ));
 	GameInfo->falldir[0] = 0;
 	Q_strncpy( GameInfo->startmap, "c0a0", sizeof( GameInfo->startmap ));
 	Q_strncpy( GameInfo->trainmap, "t0a0", sizeof( GameInfo->trainmap ));
