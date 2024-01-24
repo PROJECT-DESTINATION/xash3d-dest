@@ -284,6 +284,8 @@ def configure(conf):
 	if conf.env.DEST_OS != "ps3":
 		conf.check_cc(cflags=cflags, linkflags=linkflags, msg='Checking for required C flags')
 		conf.check_cxx(cxxflags=cxxflags, linkflags=linkflags, msg='Checking for required C++ flags')
+	else:
+		linkflags.remove('-Wl,--no-undefined')
 	
 	conf.env.append_unique('CFLAGS', cflags)
 	conf.env.append_unique('CXXFLAGS', cxxflags)
