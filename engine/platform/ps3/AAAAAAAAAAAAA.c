@@ -1,0 +1,132 @@
+/*
+lib_posix.c - dynamic library code for POSIX systems
+Copyright (C) 2018 Flying With Gauss
+
+This program is free software: you can redistribute it and/sor modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+*/
+#ifndef _GNU_SOURCE
+#define _GNU_SOURCE
+#endif
+#include "platform/platform.h"
+#include "common.h"
+#include "library.h"
+#include "filesystem.h"
+#include "server.h"
+#include <sys/prx.h>
+
+
+void *dlsym(void *handle, const char *symbol )
+{
+	Con_DPrintf( "dlsym( %p, \"%s\" ): stub\n", handle, symbol );
+	return NULL;
+}
+
+void *dlopen(const char *name, int flag )
+{
+	Con_DPrintf( "dlopen( \"%s\", %d ): stub\n", name, flag );
+	return NULL;
+}
+
+int dlclose(void *handle)
+{
+	Con_DPrintf( "dlsym( %p ): stub\n", handle );
+	return 0;
+}
+
+char *dlerror( void )
+{
+	return "Loading ELF libraries not supported in this build!\n";
+}
+
+
+qboolean COM_CheckLibraryDirectDependency( const char *name, const char *depname, qboolean directpath )
+{
+	// TODO: implement
+	return true;
+}
+
+void *COM_LoadLibrary( const char *dllname, int build_ordinals_table, qboolean directpath )
+{
+	dll_user_t *hInst = NULL;
+	void *pHandle = NULL;
+	char buf[MAX_VA_STRING];
+
+	COM_ResetLibraryError();
+
+	// platforms where gameinfo mechanism is working goes here
+	// and use FS_FindLibrary
+	hInst = FS_FindLibrary( dllname, directpath );
+	if( !hInst )
+	{
+		// HACKHACK: direct load dll
+
+		// try to find by linker(LD_LIBRARY_PATH, DYLD_LIBRARY_PATH, LD_32_LIBRARY_PATH and so on...)
+		if( !pHandle )
+		{
+			#if !XASH_PS3
+			pHandle = dlopen( dllname, RTLD_NOW );
+			#else
+				pHandle = (void*)sys_prx_load_module(dllname,0,0);
+			#endif
+			if( pHandle )
+				return pHandle;
+
+			Q_snprintf( buf, sizeof( buf ), "Failed to find library %s", dllname );
+			COM_PushLibraryError( buf );
+			COM_PushLibraryError( dlerror() );
+			return NULL;
+		}
+	}
+
+	if( hInst->custom_loader )
+	{
+		Q_snprintf( buf, sizeof( buf ), "Custom library loader is not available. Extract library %s and fix gameinfo.txt!", hInst->fullPath );
+		COM_PushLibraryError( buf );
+		Mem_Free( hInst );
+		return NULL;
+	}
+
+	{
+		if( !( hInst->hInstance = (void*)sys_prx_load_module(hInst->fullPath,0,0) ) )
+		{
+			COM_PushLibraryError( dlerror() );
+			Mem_Free( hInst );
+			return NULL;
+		}
+	}
+
+	pHandle = hInst->hInstance;
+
+	Mem_Free( hInst );
+
+	return pHandle;
+}
+
+void COM_FreeLibrary( void *hInstance )
+{
+	dlclose( hInstance );
+}
+
+void *COM_GetProcAddress( void *hInstance, const char *name )
+{
+	return dlsym( hInstance, name );
+}
+
+void *COM_FunctionFromName( void *hInstance, const char *pName )
+{
+	return COM_GetProcAddress( hInstance, pName );
+}
+
+const char *COM_NameForFunction( void *hInstance, void *function )
+{
+	return NULL;
+}
+
