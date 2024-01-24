@@ -2142,7 +2142,11 @@ void NET_Sleep( int msec )
 
 	timeout.tv_sec = msec / 1000;
 	timeout.tv_usec = (msec % 1000) * 1000;
+	#if XASH_PS3
+	socketselect( i+1, &fdset, NULL, NULL, &timeout );
+	#else
 	select( i+1, &fdset, NULL, NULL, &timeout );
+	#endif
 #endif
 }
 

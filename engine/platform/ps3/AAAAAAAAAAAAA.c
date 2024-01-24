@@ -12,8 +12,8 @@ but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 */
-#ifndef _GNU_SOURCE
-#define _GNU_SOURCE
+#ifndef _PS3_AAAA
+#define _PS3_AAAA
 #endif
 #include "platform/platform.h"
 #include "common.h"
@@ -21,7 +21,12 @@ GNU General Public License for more details.
 #include "filesystem.h"
 #include "server.h"
 #include <sys/prx.h>
-
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <errno.h>
+#include "menu_int.h"
 
 void *dlsym(void *handle, const char *symbol )
 {
@@ -130,3 +135,40 @@ const char *COM_NameForFunction( void *hInstance, void *function )
 	return NULL;
 }
 
+
+
+void Posix_Daemonize( void )
+{
+
+}
+
+#include <sys/sys_time.h>
+#include <sys/timer.h>
+double Platform_DoubleTime( void )
+{
+	sys_time_sec_t sec;
+	sys_time_nsec_t nsec;
+	sys_time_get_current_time(&sec,&nsec);
+	return (double)sec + (double)nsec/1000000000.0;
+}
+void Platform_Sleep( int msec )
+{
+	sys_timer_usleep( msec * 1000 );
+}
+
+
+const char* getenv(const char* name)
+{
+	return NULL;
+}
+
+
+const char* getcwd(const char* name)
+{
+	return NULL;
+}
+
+#if XASH_DEDICATED
+#include "ref_common.h"
+struct ref_state_s ref;
+#endif

@@ -245,7 +245,7 @@ def build(bld):
 			app_name = 'xash3d-fwgs'
 		)
 	elif bld.env.DEST_OS == 'ps3':
-		bld.env.LINKFLAGS += ['-Lpublic','-L..\\public','-lpublic']
+		bld.env.LINKFLAGS += ['-Lpublic','-L..\\public','-lpublic','-lnet_stub']
 		bld(source = source,
 			target = 'xash.elf',
 			features = 'c_ps3 cxxprogram_ps3',

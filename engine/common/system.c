@@ -629,6 +629,10 @@ qboolean Sys_NewInstance( const char *gamedir )
 	exe = strdup( "app0:/eboot.bin" );
 	Host_Shutdown( );
 	sceAppMgrLoadExec( exe, newargs, NULL );
+#elif XASH_PS3
+	// under normal circumstances it's always going to be the same path
+	exe = strdup( "/dev_hdd0/game/XASH10000/USRDIR/eboot.bin" );
+	Host_Shutdown( );
 #else
 	exelen = wai_getExecutablePath( NULL, 0, NULL );
 	exe = malloc( exelen + 1 );
