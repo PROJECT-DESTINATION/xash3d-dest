@@ -35,10 +35,10 @@ class mkfself(Task.Task):
 
 
 class cprogram_ps3(c.cprogram):
-	run_str = '${LINK_SNC} ${LINKFLAGS} -oformat=fself ${LIBPATH_ST:LIBPATH} ${LIB_ST:LIB} ${LIBPATH_ST:STLIBPATH} ${LIB_ST:STLIB} -Wl,--start-group ${CCLNK_SRC_F}${SRC} ${LIB} -Wl,--end-group ${SNCLNK_TGT_F} ${TGT[0].abspath()}'
+	run_str = '${LINK_SNC} ${LINKFLAGS} -oformat=fself ${LIBPATH_ST:LIBPATH} ${LIB_ST:LIB} ${LIBPATH_ST:STLIBPATH} ${LIB_ST:STLIB} --start-group libc.a ${CCLNK_SRC_F}${SRC} ${LIB} --end-group ${SNCLNK_TGT_F} ${TGT[0].abspath()}'
 
 class cxxprogram_ps3(cxx.cxxprogram):
-	run_str = '${LINK_SNC} ${LINKFLAGS} -oformat=fself ${LIBPATH_ST:LIBPATH} ${LIB_ST:LIB} ${LIBPATH_ST:STLIBPATH} ${LIB_ST:STLIB} --start-group ${CXXLNK_SRC_F}${SRC} ${LIB} --end-group ${SNCLNK_TGT_F} ${TGT[0].abspath()}'
+	run_str = '${LINK_SNC} ${LINKFLAGS} -oformat=fself ${LIBPATH_ST:LIBPATH} ${LIB_ST:LIB} ${LIBPATH_ST:STLIBPATH} ${LIB_ST:STLIB} --start-group libc.a ${CXXLNK_SRC_F}${SRC} ${LIB} --end-group ${SNCLNK_TGT_F} ${TGT[0].abspath()}'
 
 class cxx_ps3(cxx.cxx):
 	run_str = '${SNC} ${ARCH_ST:ARCH} ${CXXFLAGS} ${FRAMEWORKPATH_ST:FRAMEWORKPATH} -I"." ${SNCPATH_ST:INCPATHS} ${DEFINES_ST:DEFINES} ${SNC_SRC_F}${SRC} ${SNC_TGT_F}${TGT[0].abspath()} ${CPPFLAGS}'
@@ -49,7 +49,7 @@ class c_ps3(c.c):
 
 class cxxshlib_ps3(cxxprogram_ps3):
 	"Links object files into c++ shared libraries"
-	run_str = '${LD} ${LINKFLAGS} ${LIB_ST:LIB} ${LIB_ST:STLIB} ${LIBPATH_ST:LIBPATH} ${LIBPATH_ST:STLIBPATH} --start-group libstdc++.a libsupc++.a libc_stub.a libsn.a libm.a libio_stub.a libfs_stub.a ${CXXLNK_SRC_F}${SRC} ${LIB} --end-group -oformat=fsprx ${SNCLNK_TGT_F} ${TGT[0].abspath()}'
+	run_str = '${LD} ${LINKFLAGS} ${LIB_ST:LIB} ${LIB_ST:STLIB} ${LIBPATH_ST:LIBPATH} ${LIBPATH_ST:STLIBPATH} --start-group libsysmodule_stub.a libpsutil.a liblv2_stub.a libgcm_sys_stub.a libsyscall.a libgcc.a libcgc.a libstdc++.a libsupc++.a libc_stub.a libsn.a libm.a libio_stub.a libfs_stub.a ${CXXLNK_SRC_F}${SRC} ${LIB} --end-group -oformat=fsprx ${SNCLNK_TGT_F} ${TGT[0].abspath()}'
 	inst_to = '${LIBDIR}'
 
 class cstlib_ps3(c.cstlib):

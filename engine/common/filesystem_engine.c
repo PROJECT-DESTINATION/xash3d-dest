@@ -87,7 +87,7 @@ qboolean FS_LoadProgs( void )
 	FSAPI GetFSAPI;
 
 	fs_hInstance = COM_LoadLibrary( name, false, true );
-
+	Con_Printf("fs: %x\n", fs_hInstance);
 	if( !fs_hInstance )
 	{
 		Host_Error( "FS_LoadProgs: can't load filesystem library %s: %s\n", name, COM_GetLibraryError() );

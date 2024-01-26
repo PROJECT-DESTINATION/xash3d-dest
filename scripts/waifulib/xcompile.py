@@ -537,7 +537,7 @@ class PS3:
 	# they go before object list
 	def linkflags(self):
 		#linkflags = ['-lc_stub','-liberty','-lm','-lgcc','-L'+os.path.join(self.ps3sdk_dir,'target','ppu','lib'),'-L'+os.path.join(self.ps3sdk_dir,'host-win32','ppu','lib'),'-L'+os.path.join(self.ps3sdk_dir,'host-win32','ppu','lib','gcc','ppu-lv2'),'-lsupc++','-lstdc++','-lcgc','-lfios']
-		linkflags = ['-L'+os.path.join(self.ps3sdk_dir,'host-win32','lib','prx','ldscripts')]
+		linkflags = ['-L'+os.path.join(self.ps3sdk_dir,'host-win32','lib','prx','ldscripts'),'-L'+os.path.join(self.ps3sdk_dir,'host-win32','ppu','lib')]
 		# enforce no-short-enums again
 		#linkflags += ['-no-enum-size-warning', '-fno-short-enums','-fno-exceptions']
 		return linkflags

@@ -3088,9 +3088,35 @@ fs_api_t g_fsapi =
 #include <sys/prx.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include "map.h"
+#include <stdio.h>
 
-int main()
+map_void_t exports;
+void* CreateInterface(const char* interface, int* retval);
+int GetFSAPI(int version, fs_api_t* api, fs_globals_t** globals, fs_interface_t* engfuncs);
+
+int main(int argc, void* args)
 {
+	map_init(&exports);
+	int write_len;
+	sys_tty_write(0, "Y1\n", 3, &write_len);
+	if (map_set(&exports, "GetFSAPI", &GetFSAPI) == -1)
+	{
+		sys_tty_write(0, "B\n", 2, &write_len);
+	}
+	sys_tty_write(0, "Y2\n", 3, &write_len);
+	map_set(&exports, "CreateInterface", &CreateInterface);
+	sys_tty_write(0, "Y3\n", 3, &write_len);
+	*((void**)args) = &exports;
+	sys_tty_write(0, "Y4\n", 3, &write_len);
+	if (map_get(&exports, "GetFSAPI"))
+	{
+		sys_tty_write(0, "1\n",2, &write_len);
+	}
+	else
+	{
+		sys_tty_write(0, "0\n", 2, &write_len);
+	}
 	return 0;
 }
 

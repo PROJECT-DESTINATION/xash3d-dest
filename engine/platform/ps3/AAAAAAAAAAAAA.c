@@ -64,6 +64,7 @@ void *COM_LoadLibrary( const char *dllname, int build_ordinals_table, qboolean d
 	void *pHandle = NULL;
 	char buf[MAX_VA_STRING];
 	int mod = NULL;
+	int modres;
 	Q_snprintf(buf,MAX_VA_STRING,"/dev_hdd0/game/XASH10000/USRDIR/%s",dllname);
 	COM_ResetLibraryError();
 
@@ -80,7 +81,7 @@ void *COM_LoadLibrary( const char *dllname, int build_ordinals_table, qboolean d
 			mod = sys_prx_load_module(buf,0,0);
 			if( mod )
 			{
-				sys_prx_start_module(mod,0,0,&pHandle,0,0);
+				sys_prx_start_module(mod,4,&pHandle,&modres,0,0);
 				return pHandle;
 			}
 				
@@ -107,7 +108,7 @@ void *COM_LoadLibrary( const char *dllname, int build_ordinals_table, qboolean d
 			Mem_Free( hInst );
 			return NULL;
 		}
-		sys_prx_start_module(mod,0,0,&hInst->hInstance,0,0);
+		sys_prx_start_module(mod,4,&hInst->hInstance,&modres,0,0);
 	}
 
 	pHandle = hInst->hInstance;
@@ -122,9 +123,15 @@ void COM_FreeLibrary( void *hInstance )
 	dlclose( hInstance );
 }
 
+#include "map.h"
+
 void *COM_GetProcAddress( void *hInstance, const char *name )
 {
-	return dlsym( hInstance, name );
+	Con_Printf("loading %s\n",name);
+	map_void_t* exports = hInstance;
+	void* gotten = map_get(exports,name);
+	Con_Printf("it is: %x\n",gotten);
+	return gotten;
 }
 
 void *COM_FunctionFromName( void *hInstance, const char *pName )
