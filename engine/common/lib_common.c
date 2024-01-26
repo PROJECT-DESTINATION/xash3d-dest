@@ -101,24 +101,10 @@ dll_user_t *FS_FindLibrary( const char *dllname, qboolean directpath )
 
 		return p;
 	}
-#if XASH_PS3
-	string usrdirpath;
-	Q_snprintf(usrdirpath, sizeof(usrdirpath), "/dev_hdd0/game/XASH10000/USRDIR/%s", dllname);
-	// fs can't find library
-	if (!g_fsapi.FindLibrary(usrdirpath, directpath, &dllInfo))
-		return NULL;
-	// NOTE: for libraries we not fail even if search is NULL
-	// let the OS find library himself
-	p = Mem_Calloc(host.mempool, sizeof(dll_user_t));
-	Q_strncpy(p->shortPath, dllInfo.shortPath, sizeof(p->shortPath));
-	Q_strncpy(p->fullPath, dllInfo.fullPath, sizeof(p->fullPath));
-	Q_strncpy(p->dllName, usrdirpath, sizeof(p->dllName));
-	p->custom_loader = dllInfo.custom_loader;
-	p->encrypted = dllInfo.encrypted;
-#else
 	// fs can't find library
 	if( !g_fsapi.FindLibrary( dllname, directpath, &dllInfo ))
 		return NULL;
+
 	// NOTE: for libraries we not fail even if search is NULL
 	// let the OS find library himself
 	p = Mem_Calloc( host.mempool, sizeof( dll_user_t ));
@@ -127,7 +113,6 @@ dll_user_t *FS_FindLibrary( const char *dllname, qboolean directpath )
 	Q_strncpy( p->dllName, dllname, sizeof( p->dllName ));
 	p->custom_loader = dllInfo.custom_loader;
 	p->encrypted = dllInfo.encrypted;
-#endif
 
 
 	return p;

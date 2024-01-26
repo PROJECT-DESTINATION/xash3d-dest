@@ -22,6 +22,7 @@ def find_snc(conf):
 	"""
 	conf.find_program(['ps3ppusnc'], var='SNC')
 	conf.find_program(['ps3snarl'], var='ARL')
+	conf.find_program(['ps3ppuld'], var='LD')
 
 @conf
 def snc_common_flags(conf):

@@ -1361,6 +1361,7 @@ static int FS_StripIdiotRelativePath( const char *dllname, const char *gamefolde
 	return 0;
 }
 
+
 /*
 ==================
 FS_FindLibrary

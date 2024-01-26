@@ -63,12 +63,13 @@ void *COM_LoadLibrary( const char *dllname, int build_ordinals_table, qboolean d
 	dll_user_t *hInst = NULL;
 	void *pHandle = NULL;
 	char buf[MAX_VA_STRING];
-
+	int mod = NULL;
+	Q_snprintf(buf,MAX_VA_STRING,"/dev_hdd0/game/XASH10000/USRDIR/%s",dllname);
 	COM_ResetLibraryError();
 
 	// platforms where gameinfo mechanism is working goes here
 	// and use FS_FindLibrary
-	hInst = FS_FindLibrary( dllname, directpath );
+	hInst = FS_FindLibrary( buf, directpath );
 	if( !hInst )
 	{
 		// HACKHACK: direct load dll
@@ -76,13 +77,13 @@ void *COM_LoadLibrary( const char *dllname, int build_ordinals_table, qboolean d
 		// try to find by linker(LD_LIBRARY_PATH, DYLD_LIBRARY_PATH, LD_32_LIBRARY_PATH and so on...)
 		if( !pHandle )
 		{
-			#if !XASH_PS3
-			pHandle = dlopen( dllname, RTLD_NOW );
-			#else
-				pHandle = (void*)sys_prx_load_module(dllname,0,0);
-			#endif
-			if( pHandle )
+			mod = sys_prx_load_module(buf,0,0);
+			if( mod )
+			{
+				sys_prx_start_module(mod,0,0,&pHandle,0,0);
 				return pHandle;
+			}
+				
 
 			Q_snprintf( buf, sizeof( buf ), "Failed to find library %s", dllname );
 			COM_PushLibraryError( buf );
@@ -100,12 +101,13 @@ void *COM_LoadLibrary( const char *dllname, int build_ordinals_table, qboolean d
 	}
 
 	{
-		if( !( hInst->hInstance = (void*)sys_prx_load_module(hInst->fullPath,0,0) ) )
+		if( !( mod = (void*)sys_prx_load_module(hInst->fullPath,0,0) ) )
 		{
 			COM_PushLibraryError( dlerror() );
 			Mem_Free( hInst );
 			return NULL;
 		}
+		sys_prx_start_module(mod,0,0,&hInst->hInstance,0,0);
 	}
 
 	pHandle = hInst->hInstance;
