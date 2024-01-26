@@ -3086,6 +3086,11 @@ fs_api_t g_fsapi =
 #include <stdlib.h>
 #include <unistd.h>
 
+int main()
+{
+	return 0;
+}
+
 SYS_LIB_DECLARE(filesystem, SYS_LIB_AUTO_EXPORT);
 SYS_LIB_EXPORT(_filesystem_export_function, filesystem);
 

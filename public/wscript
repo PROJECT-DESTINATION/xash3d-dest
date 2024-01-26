@@ -18,9 +18,9 @@ def build(bld):
 	bld(name = 'sdk_includes', export_includes = '. ../common ../pm_shared ../engine')
 	
 	if bld.env.DEST_OS == 'ps3':
-		bld.stlib(source   = bld.path.ant_glob(['*.c','vdf/vdf.c','map/map.c']),
+		bld(source   = bld.path.ant_glob(['*.c','vdf/vdf.c','map/map.c']),
 			target   = 'public',
-			features = 'c_ps3',
+			features = 'c_ps3 cstlib_ps3',
 			use      = 'sdk_includes',
 			subsystem = bld.env.MSVC_SUBSYSTEM)
 	else:

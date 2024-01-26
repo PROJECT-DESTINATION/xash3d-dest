@@ -515,25 +515,16 @@ class PS3:
 		else:
 			ctx.fatal('Set %s environment variable pointing to the PS3 SDK directory!' %
 				' or '.join(PS3_ENVVARS))
-		
-
-	def gen_toolchain_prefix(self):
-		return 'ppu-lv2-'
+	
 
 	def gen_gcc_toolchain_path(self):
-		return os.path.join(self.ps3sdk_dir, 'host-win32','ppu','bin', self.gen_toolchain_prefix())
+		return os.path.join(self.ps3sdk_dir, 'host-win32','sn','bin','')
 
-	def cc(self):
-		return self.gen_gcc_toolchain_path() + 'gcc.exe'
-
-	def cxx(self):
-		return self.gen_gcc_toolchain_path() + 'g++.exe'
-
-	def strip(self):
-		return self.gen_gcc_toolchain_path() + 'strip.exe'
-
+	def snc(self):
+		return self.gen_gcc_toolchain_path() + 'ps3ppusnc.exe'
+	
 	def ar(self):
-		return self.gen_gcc_toolchain_path() + 'ar.exe'
+		return self.gen_gcc_toolchain_path() + 'ps3snarl.exe'
 
 	def cflags(self, cxx = False):
 		cflags = []
@@ -545,7 +536,8 @@ class PS3:
 
 	# they go before object list
 	def linkflags(self):
-		linkflags = ['-lc_stub','-liberty','-lm','-lgcc','-L'+os.path.join(self.ps3sdk_dir,'target','ppu','lib'),'-L'+os.path.join(self.ps3sdk_dir,'host-win32','ppu','lib'),'-L'+os.path.join(self.ps3sdk_dir,'host-win32','ppu','lib','gcc','ppu-lv2'),'-lsupc++','-lstdc++','-lcgc','-lfios']
+		#linkflags = ['-lc_stub','-liberty','-lm','-lgcc','-L'+os.path.join(self.ps3sdk_dir,'target','ppu','lib'),'-L'+os.path.join(self.ps3sdk_dir,'host-win32','ppu','lib'),'-L'+os.path.join(self.ps3sdk_dir,'host-win32','ppu','lib','gcc','ppu-lv2'),'-lsupc++','-lstdc++','-lcgc','-lfios']
+		linkflags = ['libsn.a','libm.a','libio_stub.a','libfs_stub.a']
 		# enforce no-short-enums again
 		#linkflags += ['-no-enum-size-warning', '-fno-short-enums','-fno-exceptions']
 		return linkflags
@@ -653,9 +645,7 @@ def configure(conf):
 		conf.env.DEST_OS = 'psvita'
 	elif conf.options.PS3:
 		conf.ps3 = ps3 = PS3(conf)
-		conf.environ['CC'] = ps3.cc()
-		conf.environ['CXX'] = ps3.cxx()
-		conf.environ['STRIP'] = ps3.strip()
+		conf.environ['SNC'] = ps3.snc()
 		conf.environ['AR'] = ps3.ar()
 		conf.env.CFLAGS += ps3.cflags()
 		conf.env.CXXFLAGS += ps3.cflags(True)
@@ -664,8 +654,8 @@ def configure(conf):
 		conf.env.DEST_OS = 'ps3'
 		conf.env.HAVE_M = True
 		conf.env.LIB_M = ['m']
-		conf.env.COMPILER_CXX = 'g++'
-		conf.env.COMPILER_CC = 'gcc'
+		conf.env.COMPILER_CXX = 'snc'
+		conf.env.COMPILER_CC = 'snc'
 		conf.env.cxxshlib_PATTERN = ".prx"
 		conf.env.cshlib_PATTERN = ".prx"
 		conf.env.cprogram_PATTERN = ".self"
@@ -717,7 +707,7 @@ def patch_compiler_cxx_configure(conf):
 		else:
 			conf.load('msvc', funs='no_autodetect')
 	else:
-		conf.load('g++')
+		conf.load('snc')
 	post_compiler_cxx_configure(conf)
 
 def patch_compiler_c_configure(conf):
@@ -727,7 +717,7 @@ def patch_compiler_c_configure(conf):
 		else:
 			conf.load('msvc', funs='no_autodetect')
 	else:
-		conf.load('gcc')
+		conf.load('snc')
 	post_compiler_c_configure(conf)
 
 setattr(compiler_cxx, 'configure', patch_compiler_cxx_configure)

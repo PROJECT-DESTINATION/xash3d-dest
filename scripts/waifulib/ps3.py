@@ -14,6 +14,7 @@
 from waflib.Tools import ccroot, c, cxx
 from waflib.Tools.ccroot import link_task
 from waflib import *
+import os
 
 def add_source_file(ctx, nodes, f):
 	if f:
@@ -34,21 +35,34 @@ class mkfself(Task.Task):
 
 
 class cprogram_ps3(c.cprogram):
-	run_str = '${LINK_CC} ${LINKFLAGS} -Wl,-oformat=fself ${LIBPATH_ST:LIBPATH} ${LIB_ST:LIB} ${STLIBPATH_ST:STLIBPATH} ${STLIB_ST:STLIB} -Wl,--start-group ${CCLNK_SRC_F}${SRC} ${LIB} -Wl,--end-group ${CCLNK_TGT_F} ${TGT[0].abspath()}'
+	run_str = '${LINK_SNC} ${LINKFLAGS} -oformat=fself ${LIBPATH_ST:LIBPATH} ${LIB_ST:LIB} ${LIBPATH_ST:STLIBPATH} ${LIB_ST:STLIB} -Wl,--start-group ${CCLNK_SRC_F}${SRC} ${LIB} -Wl,--end-group ${SNCLNK_TGT_F} ${TGT[0].abspath()}'
 
 class cxxprogram_ps3(cxx.cxxprogram):
-	run_str = '${LINK_CXX} ${LINKFLAGS} -Wl,-oformat=fself ${LIBPATH_ST:LIBPATH} ${LIB_ST:LIB} ${STLIBPATH_ST:STLIBPATH} ${STLIB_ST:STLIB} -Wl,--start-group ${CXXLNK_SRC_F}${SRC} ${LIB} -Wl,--end-group ${CXXLNK_TGT_F} ${TGT[0].abspath()}'
+	run_str = '${LINK_SNC} ${LINKFLAGS} -oformat=fself ${LIBPATH_ST:LIBPATH} ${LIB_ST:LIB} ${LIBPATH_ST:STLIBPATH} ${LIB_ST:STLIB} --start-group ${CXXLNK_SRC_F}${SRC} ${LIB} --end-group ${SNCLNK_TGT_F} ${TGT[0].abspath()}'
 
 class cxx_ps3(cxx.cxx):
-	run_str = '${CXX} ${ARCH_ST:ARCH} ${CXXFLAGS} ${FRAMEWORKPATH_ST:FRAMEWORKPATH} ${CPPPATH_ST:INCPATHS} ${DEFINES_ST:DEFINES} ${CXX_SRC_F}${SRC} ${CXX_TGT_F}${TGT[0].abspath()} ${CPPFLAGS}'
+	run_str = '${SNC} ${ARCH_ST:ARCH} ${CXXFLAGS} ${FRAMEWORKPATH_ST:FRAMEWORKPATH} -I"." ${SNCPATH_ST:INCPATHS} ${DEFINES_ST:DEFINES} ${SNC_SRC_F}${SRC} ${SNC_TGT_F}${TGT[0].abspath()} ${CPPFLAGS}'
 
 class c_ps3(c.c):
-	run_str = '${CC} ${ARCH_ST:ARCH} ${CFLAGS} ${FRAMEWORKPATH_ST:FRAMEWORKPATH} ${CPPPATH_ST:INCPATHS} ${DEFINES_ST:DEFINES} ${CC_SRC_F}${SRC} ${CC_TGT_F}${TGT[0].abspath()} ${CPPFLAGS}'
+	run_str = '${SNC} ${ARCH_ST:ARCH} ${CFLAGS} ${FRAMEWORKPATH_ST:FRAMEWORKPATH} -I"." ${SNCPATH_ST:INCPATHS} ${DEFINES_ST:DEFINES} ${SNC_SRC_F}${SRC} ${SNC_TGT_F}${TGT[0].abspath()} ${CPPFLAGS}'
+	
 
 class cxxshlib_ps3(cxxprogram_ps3):
 	"Links object files into c++ shared libraries"
-	run_str = '${LINK_CXX} ${LINKFLAGS} -zgenstub -zgenprx -mprx ${LIBPATH_ST:LIBPATH} ${LIB_ST:LIB} ${STLIBPATH_ST:STLIBPATH} ${STLIB_ST:STLIB} -Wl,--start-group ${CXXLNK_SRC_F}${SRC} ${LIB} -Wl,--end-group ${CXXLNK_TGT_F} ${TGT[0].abspath()}'
+	run_str = '${LINK_SNC} ${LINKFLAGS} -oformat=fsprx ${LIBPATH_ST:LIBPATH} ${LIB_ST:LIB} ${LIBPATH_ST:STLIBPATH} ${LIB_ST:STLIB} --start-group ${CXXLNK_SRC_F}${SRC} ${LIB} --end-group ${SNCLNK_TGT_F} ${TGT[0].abspath()}'
 	inst_to = '${LIBDIR}'
+
+class cstlib_ps3(c.cstlib):
+	"Links object files into c++ shared libraries"
+	run_str = '${ARL} -M ${TGT[0].abspath()}.snarl | ${TGT[0].abspath()} ${STLIB_ST:SRC} save end'
+	inst_to = '${LIBDIR}'
+	def exec_command(self, *k, **kw):
+		
+		with open(k[0][2],"w") as f:
+			f.write("create " + "\n".join(k[0][4:]))
+		k = [k[0][:3]]
+		ret = super().exec_command(*k, **kw)
+		return ret
 
 @TaskGen.extension('.cpp','.cc','.cxx','.C','.c++')
 def cxx_ps3_hook(self, node):
@@ -67,7 +81,7 @@ def c_hook(self, node):
 
 @TaskGen.feature('c_ps3', 'cxx_ps3')
 @TaskGen.after_method('propagate_uselib_vars', 'process_source')
-def apply_incpaths(self):
+def apply_incpaths_ps3(self):
 	"""
 	Task generator method that processes the attribute *includes*::
 
@@ -88,8 +102,104 @@ def apply_incpaths(self):
 
 
 @TaskGen.feature('c_ps3', 'cxx_ps3')
+@TaskGen.before_method('apply_incpaths_ps3', 'propagate_uselib_vars')
+@TaskGen.after_method('apply_link_ps3', 'process_source')
+def process_use_ps3(self):
+	"""
+	Process the ``use`` attribute which contains a list of task generator names::
+
+		def build(bld):
+			bld.shlib(source='a.c', target='lib1')
+			bld.program(source='main.c', target='app', use='lib1')
+
+	See :py:func:`waflib.Tools.ccroot.use_rec`.
+	"""
+
+	use_not = self.tmp_use_not = set()
+	self.tmp_use_seen = [] # we would like an ordered set
+	use_prec = self.tmp_use_prec = {}
+	self.uselib = self.to_list(getattr(self, 'uselib', []))
+	self.includes = self.to_list(getattr(self, 'includes', []))
+	names = self.to_list(getattr(self, 'use', []))
+
+	for x in names:
+		self.use_rec(x)
+
+	for x in use_not:
+		if x in use_prec:
+			del use_prec[x]
+
+	# topological sort
+	out = self.tmp_use_sorted = []
+	tmp = []
+	for x in self.tmp_use_seen:
+		for k in use_prec.values():
+			if x in k:
+				break
+		else:
+			tmp.append(x)
+
+	while tmp:
+		e = tmp.pop()
+		out.append(e)
+		try:
+			nlst = use_prec[e]
+		except KeyError:
+			pass
+		else:
+			del use_prec[e]
+			for x in nlst:
+				for y in use_prec:
+					if x in use_prec[y]:
+						break
+				else:
+					tmp.append(x)
+	if use_prec:
+		raise Errors.WafError('Cycle detected in the use processing %r' % use_prec)
+	out.reverse()
+	
+	link_task = getattr(self, 'link_task', None)
+	for x in out:
+		y = self.bld.get_tgen_by_name(x)
+		var = y.tmp_use_var
+		if var and link_task:
+			if self.env.SKIP_STLIB_LINK_DEPS and isinstance(link_task, stlink_task):
+				# If the skip_stlib_link_deps feature is enabled then we should
+				# avoid adding lib deps to the stlink_task instance.
+				pass
+			elif var == 'LIB' or y.tmp_use_stlib or x in names:
+				self.env.append_value(var, [y.target[y.target.rfind(os.sep) + 1:]])
+				self.link_task.dep_nodes.extend(y.link_task.outputs)
+				tmp_path = y.link_task.outputs[0].parent.path_from(self.get_cwd())
+				self.env.append_unique(var + 'PATH', [tmp_path])
+		else:
+			if y.tmp_use_objects:
+				self.add_objects_from_tgen(y)
+
+		if getattr(y, 'export_includes', None):
+			print(self,y.to_incnodes(y.export_includes))
+			# self.includes may come from a global variable #2035
+			self.includes = self.includes + y.to_incnodes(y.export_includes)
+
+		if getattr(y, 'export_defines', None):
+			self.env.append_value('DEFINES', self.to_list(y.export_defines))
+
+	# and finally, add the use variables (no recursion needed)
+	for x in names:
+		try:
+			y = self.bld.get_tgen_by_name(x)
+		except Errors.WafError:
+			if not self.env['STLIB_' + x] and not x in self.uselib:
+				self.uselib.append(x)
+		else:
+			for k in self.to_list(getattr(y, 'use', [])):
+				if not self.env['STLIB_' + k] and not k in self.uselib:
+					self.uselib.append(k)
+
+
+@TaskGen.feature('c_ps3', 'cxx_ps3')
 @TaskGen.after_method('process_source')
-def apply_link(self):
+def apply_link_ps3(self):
 	"""
 	Collect the tasks stored in ``compiled_tasks`` (created by :py:func:`waflib.Tools.ccroot.create_compiled_task`), and
 	use the outputs for a new instance of :py:class:`waflib.Tools.ccroot.link_task`. The class to use is the first link task
