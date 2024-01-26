@@ -79,6 +79,7 @@ static int Sys_Start( void )
 #if XASH_PS3
 #include "ps3structs.h"
 #include <stdlib.h>
+#include <dirent.h>
 ps3std_t stds =
 {
 	malloc,
@@ -86,7 +87,14 @@ ps3std_t stds =
 	realloc,
 	strcmp,
 	memcpy,
-	strlen
+	strlen,
+	opendir,
+	closedir,
+	readdir,
+	memset,
+	strcasecmp,
+	stat,
+	vsnprintf
 };
 #endif
 

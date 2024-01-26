@@ -93,21 +93,21 @@ qboolean FS_LoadProgs( void )
 		Host_Error( "FS_LoadProgs: can't load filesystem library %s: %s\n", name, COM_GetLibraryError() );
 		return false;
 	}
-
+	Con_Printf("Currently on: %s : %i\n", __FILE__, __LINE__);
 	if( !( GetFSAPI = (FSAPI)COM_GetProcAddress( fs_hInstance, GET_FS_API )))
 	{
 		FS_UnloadProgs();
 		Host_Error( "FS_LoadProgs: can't find GetFSAPI entry point in %s\n", name );
 		return false;
 	}
-
+	Con_Printf("Currently on: %s : %i\n", __FILE__, __LINE__);
 	if( !GetFSAPI( FS_API_VERSION, &g_fsapi, &FI, &fs_memfuncs ))
 	{
 		FS_UnloadProgs();
 		Host_Error( "FS_LoadProgs: can't initialize filesystem API: wrong version\n" );
 		return false;
 	}
-
+	Con_Printf("Currently on: %s : %i\n", __FILE__, __LINE__);
 	if( !( fs_pfnCreateInterface = (pfnCreateInterface_t)COM_GetProcAddress( fs_hInstance, "CreateInterface" )))
 	{
 		FS_UnloadProgs();
@@ -115,7 +115,7 @@ qboolean FS_LoadProgs( void )
 		return false;
 	}
 
-	Con_DPrintf( "FS_LoadProgs: filesystem_stdio successfully loaded\n" );
+	Con_Printf( "FS_LoadProgs: filesystem_stdio successfully loaded\n" );
 
 	return true;
 }
@@ -135,7 +135,7 @@ void FS_Init( void )
 
 	if( !Sys_GetParmFromCmdLine( "-game", gamedir ))
 		Q_strncpy( gamedir, SI.basedirName, sizeof( gamedir )); // gamedir == basedir
-
+	Con_Printf("roodeer %s    ro %s\n", host.rootdir, host.rodir);
 	if( !FS_InitStdio( true, host.rootdir, SI.basedirName, gamedir, host.rodir ))
 	{
 		Host_Error( "Can't init filesystem_stdio!\n" );

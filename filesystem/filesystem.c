@@ -238,12 +238,19 @@ void listdirectory( stringlist_t *list, const char *path )
 		stringlistappend( list, n_file.name );
 	_findclose( hFile );
 #else
-	if( !( dir = opendir( path ) ) )
+	if (!(dir = opendir(path)))
+	{
+		Con_Printf("couldnt opendir %s\n", path);
 		return;
+	}
 
 	// iterate through the directory
-	while( ( entry = readdir( dir ) ))
-		stringlistappend( list, entry->d_name );
+	while ((entry = readdir(dir)))
+	{
+		Con_Printf("name: %s\n", entry->d_name);
+		stringlistappend(list, entry->d_name);
+	}
+	Con_Printf("entry: %x\n",entry);
 	closedir( dir );
 #endif
 
@@ -1084,7 +1091,7 @@ static qboolean FS_ParseGameInfo( const char *gamedir, gameinfo_t *GameInfo )
 	Q_snprintf( default_gameinfo_path, sizeof( default_gameinfo_path ), "%s/gameinfo.txt", fs_basedir );
 	Q_snprintf( gameinfo_path, sizeof( gameinfo_path ), "%s/gameinfo.txt", gamedir );
 	Q_snprintf( liblist_path, sizeof( liblist_path ), "%s/liblist.gam", gamedir );
-
+	Con_Printf("Parsing gameinfo %s\n", gamedir);
 	// here goes some RoDir magic...
 	if( COM_CheckStringEmpty( fs_rodir ))
 	{
@@ -1303,6 +1310,7 @@ void FS_LoadGameInfo( const char *rootfolder )
 	// validate gamedir
 	for( i = 0; i < FI.numgames; i++ )
 	{
+		Con_Printf("1313 %s\n", FI.games[i]->gamefolder);
 		if( !Q_stricmp( FI.games[i]->gamefolder, fs_gamedir ))
 			break;
 	}
@@ -1572,9 +1580,13 @@ qboolean FS_InitStdio( qboolean unused_set_to_true, const char *rootdir, const c
 
 	// validate directories
 	stringlistinit( &dirs );
+#if XASH_PS3
+	listdirectory(&dirs, "/dev_hdd0/game/XASH10000/USRDIR/");
+#else
 	listdirectory( &dirs, "./" );
+#endif
 	stringlistsort( &dirs );
-
+	Con_Printf("count: %i\n", dirs.numstrings);
 	for( i = 0; i < dirs.numstrings; i++ )
 	{
 		if( !Q_stricmp( fs_basedir, dirs.strings[i] ))
@@ -1600,6 +1612,7 @@ qboolean FS_InitStdio( qboolean unused_set_to_true, const char *rootdir, const c
 
 	for( i = 0; i < dirs.numstrings; i++ )
 	{
+		Con_Printf("idk anymore %s\n", dirs.strings[i]);
 		if( !FS_SysFolderExists( dirs.strings[i] ))
 			continue;
 
@@ -1865,12 +1878,29 @@ qboolean FS_SysFolderExists( const char *path )
 {
 #if XASH_WIN32
 	struct _stat buf;
-	if( _wstat( FS_PathToWideChar( path ), &buf ) < 0 )
+	if (_wstat(FS_PathToWideChar(path), &buf) < 0)
+	{
+#elif XASH_PS3
+	string newpath;
+	if (path[0] == '/')
+	{
+		Q_strncpy(newpath, path, sizeof(newpath));
+	}
+	else
+	{
+		Q_snprintf(newpath, sizeof(newpath), "%s/%s", fs_rodir, path);
+	}
+	struct stat buf;
+	if (stat(newpath, &buf) < 0)
+	{
 #else
 	struct stat buf;
-	if( stat( path, &buf ) < 0 )
+	if (stat(path, &buf) < 0)
+	{
 #endif
+		Con_Printf("GAAAAAAAA %s AAGAGAGAGGAGAGG\n", newpath);
 		return false;
+	}
 
 	return S_ISDIR( buf.st_mode );
 }
@@ -3103,8 +3133,8 @@ int main(int argc, void* args)
 {
 	stds = ((package_t*)args)->stds;
 	map_init(&exports);
-	map_set(&exports, "GetFSAPI", &GetFSAPI);
-	map_set(&exports, "CreateInterface", &CreateInterface);
+	map_set(&exports, "GetFSAPI", GetFSAPI);
+	map_set(&exports, "CreateInterface", CreateInterface);
 	((package_t*)args)->exports = &exports;
 	return 0;
 }

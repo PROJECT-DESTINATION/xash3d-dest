@@ -32,3 +32,34 @@ size_t strlen(const char *s)
 {
 	return stds->strlen(s);
 }
+
+void* memset(void*s, int c, size_t n)
+{
+	return stds->memset(s,c,n);
+}
+
+DIR *opendir(const char* name)
+{
+	return stds->opendir(name);
+}
+int closedir(DIR* dirp)
+{
+	return stds->closedir(dirp);
+}
+struct dirent* readdir(DIR* dirp)
+{
+	return stds->readdir(dirp);
+}
+int strcasecmp(const char *a, const char *b)
+{
+	return stds->strcasecmp(a,b);
+}
+int stat(const char *path, struct stat *buf)
+{
+	return stds->stat(path,buf);
+}
+
+int vsnprintf(char *_Restrict A, size_t B,const char *_Restrict C, _Va_list D)
+{
+	return stds->vsnprintf(A,B,C,D);
+}

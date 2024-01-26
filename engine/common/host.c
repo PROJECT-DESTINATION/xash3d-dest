@@ -1172,18 +1172,20 @@ void Host_InitCommon( int argc, char **argv, const char *progname, qboolean bCha
 		Sys_Error( "Changing working directory failed (empty working directory)\n" );
 		return;
 	}
+#else
+	Q_strncpy(host.rodir, "/dev_hdd0/game/XASH10000/USRDIR/", sizeof(host.rodir));
 #endif
 
 	FS_LoadProgs();
-
+	Con_Printf("Currently on: %s : %i\n", __FILE__, __LINE__);
 	// TODO: this function will cause engine to stop in case of fail
 	// when it will have an option to return string error, restore Sys_Error
 	FS_SetCurrentDirectory( host.rootdir );
-
+	Con_Printf("Currently on: %s : %i\n", __FILE__, __LINE__);
 	FS_Init();
-
+	Con_Printf("Currently on: %s : %i\n", __FILE__, __LINE__);
 	Sys_InitLog();
-
+	Con_Printf("Currently on: %s : %i\n", __FILE__, __LINE__);
 	// print bugcompatibility level here, after log was initialized
 	if( host.bugcomp == BUGCOMP_GOLDSRC )
 	{
