@@ -247,7 +247,7 @@ def build(bld):
 	elif bld.env.DEST_OS == 'ps3':
 		bld.env.LINKFLAGS += ['-Lpublic','-L..\\public','-lpublic','-lnet_stub']
 		bld(source = source,
-			target = 'xash.elf',
+			target = 'xash.self',
 			features = 'c_ps3 cxxprogram_ps3',
 			includes = includes,
 			use = libs,

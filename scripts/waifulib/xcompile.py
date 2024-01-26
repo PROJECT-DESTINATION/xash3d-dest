@@ -545,7 +545,7 @@ class PS3:
 
 	# they go before object list
 	def linkflags(self):
-		linkflags = ['-mprx','-zgenprx','-zgenstub','-lc_stub','-liberty','-lm','-lgcc','-L'+os.path.join(self.ps3sdk_dir,'target','ppu','lib'),'-L'+os.path.join(self.ps3sdk_dir,'host-win32','ppu','lib'),'-L'+os.path.join(self.ps3sdk_dir,'host-win32','ppu','lib','gcc','ppu-lv2'),'-lsupc++','-lstdc++','-lcgc','-lfios']
+		linkflags = ['-lc_stub','-liberty','-lm','-lgcc','-L'+os.path.join(self.ps3sdk_dir,'target','ppu','lib'),'-L'+os.path.join(self.ps3sdk_dir,'host-win32','ppu','lib'),'-L'+os.path.join(self.ps3sdk_dir,'host-win32','ppu','lib','gcc','ppu-lv2'),'-lsupc++','-lstdc++','-lcgc','-lfios']
 		# enforce no-short-enums again
 		#linkflags += ['-no-enum-size-warning', '-fno-short-enums','-fno-exceptions']
 		return linkflags
@@ -668,8 +668,8 @@ def configure(conf):
 		conf.env.COMPILER_CC = 'gcc'
 		conf.env.cxxshlib_PATTERN = ".prx"
 		conf.env.cshlib_PATTERN = ".prx"
-		conf.env.cprogram_PATTERN = ".elf"
-		conf.env.cxxprogram_PATTERN = ".elf"
+		conf.env.cprogram_PATTERN = ".self"
+		conf.env.cxxprogram_PATTERN = ".self"
 		conf.environ["PATH"] += os.path.join(ps3.ps3sdk_dir, 'host-win32', 'bin')
 		
 		

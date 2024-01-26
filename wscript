@@ -365,7 +365,7 @@ def configure(conf):
 	conf.env.SUPPORT_BSP2_FORMAT = conf.options.SUPPORT_BSP2_FORMAT
 
 	# disable game_launch compiling on platform where it's not needed
-	conf.env.DISABLE_LAUNCHER = conf.env.DEST_OS in ['android', 'nswitch', 'psvita', 'dos'] or conf.env.MAGX
+	conf.env.DISABLE_LAUNCHER = conf.env.DEST_OS in ['android', 'nswitch', 'psvita', 'dos', 'ps3'] or conf.env.MAGX
 
 	if conf.env.SAILFISH == 'aurora':
 		conf.env.DEFAULT_RPATH = '/usr/share/su.xash.Engine/lib'

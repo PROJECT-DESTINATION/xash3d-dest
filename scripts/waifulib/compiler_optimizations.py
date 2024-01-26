@@ -82,7 +82,7 @@ CFLAGS = {
 		'default': ['-O3']
 	},
 	'ps3': {
-		'gcc':     ['-O3']
+		'gcc':     ['-O2']
 	},
 	'debug': {
 		'msvc':    ['/Od', '/ZI'],

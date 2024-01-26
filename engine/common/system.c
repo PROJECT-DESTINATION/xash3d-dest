@@ -31,6 +31,8 @@ GNU General Public License for more details.
 #if !XASH_ANDROID
 #include <pwd.h>
 #endif
+#else
+#include <sys/tty.h>
 #endif
 #endif
 
@@ -505,7 +507,10 @@ void Sys_Print( const char *pMsg )
 		Con_Print( pMsg );
 	}
 #endif
-
+#if XASH_PS3
+	dword writelen;
+	sys_tty_write(0, pMsg, strlen(pMsg), &writelen);
+#endif
 #if XASH_WIN32
 	{
 		const char	*msg;

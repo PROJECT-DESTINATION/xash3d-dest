@@ -34,10 +34,10 @@ class mkfself(Task.Task):
 
 
 class cprogram_ps3(c.cprogram):
-	run_str = '${LINK_CC} ${LINKFLAGS} ${LIBPATH_ST:LIBPATH} ${LIB_ST:LIB} ${STLIBPATH_ST:STLIBPATH} ${STLIB_ST:STLIB} -Wl,--start-group ${CCLNK_SRC_F}${SRC} ${LIB} -Wl,--end-group ${CCLNK_TGT_F} ${TGT[0].abspath()}'
+	run_str = '${LINK_CC} ${LINKFLAGS} -Wl,-oformat=fself ${LIBPATH_ST:LIBPATH} ${LIB_ST:LIB} ${STLIBPATH_ST:STLIBPATH} ${STLIB_ST:STLIB} -Wl,--start-group ${CCLNK_SRC_F}${SRC} ${LIB} -Wl,--end-group ${CCLNK_TGT_F} ${TGT[0].abspath()}'
 
 class cxxprogram_ps3(cxx.cxxprogram):
-	run_str = '${LINK_CXX} ${LINKFLAGS} ${LIBPATH_ST:LIBPATH} ${LIB_ST:LIB} ${STLIBPATH_ST:STLIBPATH} ${STLIB_ST:STLIB} -Wl,--start-group ${CXXLNK_SRC_F}${SRC} ${LIB} -Wl,--end-group ${CXXLNK_TGT_F} ${TGT[0].abspath()}'
+	run_str = '${LINK_CXX} ${LINKFLAGS} -Wl,-oformat=fself ${LIBPATH_ST:LIBPATH} ${LIB_ST:LIB} ${STLIBPATH_ST:STLIBPATH} ${STLIB_ST:STLIB} -Wl,--start-group ${CXXLNK_SRC_F}${SRC} ${LIB} -Wl,--end-group ${CXXLNK_TGT_F} ${TGT[0].abspath()}'
 
 class cxx_ps3(cxx.cxx):
 	run_str = '${CXX} ${ARCH_ST:ARCH} ${CXXFLAGS} ${FRAMEWORKPATH_ST:FRAMEWORKPATH} ${CPPPATH_ST:INCPATHS} ${DEFINES_ST:DEFINES} ${CXX_SRC_F}${SRC} ${CXX_TGT_F}${TGT[0].abspath()} ${CPPFLAGS}'
@@ -47,6 +47,7 @@ class c_ps3(c.c):
 
 class cxxshlib_ps3(cxxprogram_ps3):
 	"Links object files into c++ shared libraries"
+	run_str = '${LINK_CXX} ${LINKFLAGS} -zgenstub -zgenprx -mprx ${LIBPATH_ST:LIBPATH} ${LIB_ST:LIB} ${STLIBPATH_ST:STLIBPATH} ${STLIB_ST:STLIB} -Wl,--start-group ${CXXLNK_SRC_F}${SRC} ${LIB} -Wl,--end-group ${CXXLNK_TGT_F} ${TGT[0].abspath()}'
 	inst_to = '${LIBDIR}'
 
 @TaskGen.extension('.cpp','.cc','.cxx','.C','.c++')

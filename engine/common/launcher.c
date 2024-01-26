@@ -76,6 +76,8 @@ static int Sys_Start( void )
 	return Host_Main( szArgc, szArgv, game, 0, Sys_ChangeGame );
 }
 
+
+
 int main( int argc, char **argv )
 {
 #if XASH_PSVITA
