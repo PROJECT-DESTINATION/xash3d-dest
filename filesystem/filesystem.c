@@ -1414,8 +1414,10 @@ static qboolean FS_FindLibrary( const char *dllname, qboolean directpath, fs_dll
 
 		// trying check also 'bin' folder for indirect paths
 		search = FS_FindFile( dllname, &index, fixedname, sizeof( fixedname ), false );
-		if( !search )
+		if (!search)
+		{
 			return false; // unable to find
+		}
 
 		Q_strncpy( dllInfo->shortPath, fixedname, sizeof( dllInfo->shortPath ));
 	}
@@ -3095,7 +3097,7 @@ SYS_LIB_DECLARE(filesystem, SYS_LIB_AUTO_EXPORT);
 SYS_LIB_EXPORT(_filesystem_export_function, filesystem);
 
 SYS_MODULE_INFO(filesystem, 0, 1, 0);
-
+SYS_MODULE_START(main);
 
 int _filesystem_export_function(void)
 {

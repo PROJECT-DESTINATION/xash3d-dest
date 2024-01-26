@@ -1110,6 +1110,9 @@ void Host_InitCommon( int argc, char **argv, const char *progname, qboolean bCha
 			Sys_Error( "couldn't find xash3d data directory" );
 			host.rootdir[0] = 0;
 		}
+#elif XASH_PS3
+		COM_ExtractFilePath(host.rootdir, argv[0]);
+		COM_ExtractFilePath(host.rodir, argv[0]);
 #elif (XASH_SDL == 2) && !XASH_NSWITCH // GetBasePath not impl'd in switch-sdl2
 		char *szBasePath = SDL_GetBasePath();
 		if( szBasePath )
@@ -1163,12 +1166,13 @@ void Host_InitCommon( int argc, char **argv, const char *progname, qboolean bCha
 
 	if( len && host.rodir[len - 1] == '/' )
 		host.rodir[len - 1] = 0;
-
+#if !XASH_PS3
 	if( !COM_CheckStringEmpty( host.rootdir ))
 	{
 		Sys_Error( "Changing working directory failed (empty working directory)\n" );
 		return;
 	}
+#endif
 
 	FS_LoadProgs();
 
