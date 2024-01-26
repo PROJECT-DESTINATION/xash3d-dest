@@ -31,13 +31,7 @@ static map_node_t *map_newnode(const char *key, void *value, int vsize) {
   map_node_t* node;
   size_t ksize = strlen(key) + 1;
   size_t voffset = ksize + ((sizeof(void*) - ksize) % sizeof(void*));
-  sys_timer_usleep(1000000);
   node = malloc(sizeof(*node) + voffset + vsize);
-  int writelen;
-  if((sizeof(*node) + voffset + vsize)%8 > 0)
-  {
-	sys_tty_write(0,"wha\n",4,&writelen);
-  }
   if (!node) return NULL;
   memcpy(node + 1, key, ksize);
   node->hash = map_hash(key);
@@ -136,7 +130,7 @@ void *map_get_(map_base_t *m, const char *key) {
 
 
 int map_set_(map_base_t *m, const char *key, void *value, int vsize) {
-  int n, err, writelen;
+  int n, err;
   map_node_t **next, *node;
   /* Find & replace existing node */
   next = map_getref(m, key);
@@ -146,13 +140,10 @@ int map_set_(map_base_t *m, const char *key, void *value, int vsize) {
   }
   /* Add new node */
   node = map_newnode(key, value, vsize);
-  sys_tty_write(0,"AAA\n",4,&writelen);
   if (node == NULL) goto fail;
-  sys_tty_write(0,"CCC\n",4,&writelen);
   if (m->nnodes >= m->nbuckets) {
     n = (m->nbuckets > 0) ? (m->nbuckets << 1) : 1;
     err = map_resize(m, n);
-	sys_tty_write(0,"JJJ\n",4,&writelen);
     if (err) goto fail;
   }
   map_addnode(m, node);

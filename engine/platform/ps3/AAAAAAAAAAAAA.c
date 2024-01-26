@@ -57,17 +57,20 @@ qboolean COM_CheckLibraryDirectDependency( const char *name, const char *depname
 	// TODO: implement
 	return true;
 }
+#include "ps3structs.h"
+extern ps3std_t stds;
 
 void *COM_LoadLibrary( const char *dllname, int build_ordinals_table, qboolean directpath )
 {
 	dll_user_t *hInst = NULL;
 	void *pHandle = NULL;
+	package_t package;
 	char buf[MAX_VA_STRING];
 	int mod = NULL;
 	int modres;
 	Q_snprintf(buf,MAX_VA_STRING,"/dev_hdd0/game/XASH10000/USRDIR/%s",dllname);
 	COM_ResetLibraryError();
-
+	package.stds = &stds;
 	// platforms where gameinfo mechanism is working goes here
 	// and use FS_FindLibrary
 	hInst = FS_FindLibrary( buf, directpath );
@@ -81,8 +84,8 @@ void *COM_LoadLibrary( const char *dllname, int build_ordinals_table, qboolean d
 			mod = sys_prx_load_module(buf,0,0);
 			if( mod )
 			{
-				sys_prx_start_module(mod,4,&pHandle,&modres,0,0);
-				return pHandle;
+				sys_prx_start_module(mod,4,&package,&modres,0,0);
+				return package.exports;
 			}
 				
 
@@ -108,10 +111,10 @@ void *COM_LoadLibrary( const char *dllname, int build_ordinals_table, qboolean d
 			Mem_Free( hInst );
 			return NULL;
 		}
-		sys_prx_start_module(mod,4,&hInst->hInstance,&modres,0,0);
+		sys_prx_start_module(mod,4,&package,&modres,0,0);
 	}
 
-	pHandle = hInst->hInstance;
+	pHandle = package.exports;
 
 	Mem_Free( hInst );
 

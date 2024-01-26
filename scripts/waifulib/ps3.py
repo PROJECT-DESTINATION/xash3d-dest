@@ -49,7 +49,7 @@ class c_ps3(c.c):
 
 class cxxshlib_ps3(cxxprogram_ps3):
 	"Links object files into c++ shared libraries"
-	run_str = '${LD} ${LINKFLAGS} ${LIB_ST:LIB} ${LIB_ST:STLIB} ${LIBPATH_ST:LIBPATH} ${LIBPATH_ST:STLIBPATH} --start-group libsysmodule_stub.a libpsutil.a liblv2_stub.a libgcm_sys_stub.a libsyscall.a libgcc.a libcgc.a libstdc++.a libsupc++.a libc_stub.a libsn.a libm.a libio_stub.a libfs_stub.a ${CXXLNK_SRC_F}${SRC} ${LIB} --end-group -oformat=fsprx ${SNCLNK_TGT_F} ${TGT[0].abspath()}'
+	run_str = '${LD} ${LINKFLAGS} ${LIB_ST:LIB} ${LIB_ST:STLIB} ${LIBPATH_ST:LIBPATH} ${LIBPATH_ST:STLIBPATH} --start-group libsysmodule_stub.a libpsutil.a liblv2_stub.a libgcm_sys_stub.a libsyscall.a libgcc.a libcgc.a libstdc++.a libsupc++.a libsn.a libm.a libio_stub.a libfs_stub.a ${CXXLNK_SRC_F}${SRC} ${LIB} libc_stub.a --end-group -oformat=fsprx ${SNCLNK_TGT_F} ${TGT[0].abspath()}'
 	inst_to = '${LIBDIR}'
 
 class cstlib_ps3(c.cstlib):

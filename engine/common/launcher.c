@@ -76,7 +76,19 @@ static int Sys_Start( void )
 	return Host_Main( szArgc, szArgv, game, 0, Sys_ChangeGame );
 }
 
-
+#if XASH_PS3
+#include "ps3structs.h"
+#include <stdlib.h>
+ps3std_t stds =
+{
+	malloc,
+	free,
+	realloc,
+	strcmp,
+	memcpy,
+	strlen
+};
+#endif
 
 int main( int argc, char **argv )
 {
