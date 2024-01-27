@@ -951,7 +951,7 @@ Host_InitCommon
 void Host_InitCommon( int argc, char **argv, const char *progname, qboolean bChangeGame )
 {
 	char		dev_level[4];
-	int		developer = DEFAULT_DEV;
+	int		developer = DEV_EXTENDED;
 	const char *baseDir;
 	char ticrate[16];
 	int len;
@@ -1173,7 +1173,7 @@ void Host_InitCommon( int argc, char **argv, const char *progname, qboolean bCha
 		return;
 	}
 #else
-	Q_strncpy(host.rodir, "/dev_hdd0/game/XASH10000/USRDIR/", sizeof(host.rodir));
+	Q_strncpy(host.rootdir, "/dev_hdd0/game/XASH10000/USRDIR/", sizeof(host.rootdir));
 #endif
 
 	FS_LoadProgs();

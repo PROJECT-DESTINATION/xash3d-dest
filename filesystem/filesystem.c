@@ -247,10 +247,9 @@ void listdirectory( stringlist_t *list, const char *path )
 	// iterate through the directory
 	while ((entry = readdir(dir)))
 	{
-		Con_Printf("name: %s\n", entry->d_name);
+		//Con_Printf("name: %s\n", entry->d_name);
 		stringlistappend(list, entry->d_name);
 	}
-	Con_Printf("entry: %x\n",entry);
 	closedir( dir );
 #endif
 
@@ -1012,6 +1011,7 @@ static qboolean FS_ReadGameInfo( const char *filepath, const char *gamedir, game
 	char	*afile;
 
 	afile = (char *)FS_LoadFile( filepath, NULL, false );
+	Con_Printf("\nthe file %x\n\n", afile);
 	if( !afile )
 		return false;
 
@@ -1157,10 +1157,10 @@ static qboolean FS_ParseGameInfo( const char *gamedir, gameinfo_t *GameInfo )
 		}
 		else FS_CreateDefaultGameInfo( gameinfo_path );
 	}
-
+	Con_Printf("before check %x %s\n", GameInfo, gameinfo_path);
 	if( !GameInfo || !FS_FileExists( gameinfo_path, false ))
 		return false; // no dest
-
+	Con_Printf("after check\n");
 	return FS_ReadGameInfo( gameinfo_path, gamedir, GameInfo );
 }
 
@@ -1182,7 +1182,7 @@ void FS_AddGameHierarchy( const char *dir, uint flags )
 		return;
 
 	FS_AllowDirectPaths(true);
-	Q_snprintf(buf, sizeof(buf), "%s/%s/gameinfo.txt", fs_rodir, dir);
+	Q_snprintf(buf, sizeof(buf), "%s%s/gameinfo.txt", fs_rodir, dir);
 	gameinfo = vdf_parse_file(buf);
 	if (!gameinfo)
 	{
@@ -1580,11 +1580,7 @@ qboolean FS_InitStdio( qboolean unused_set_to_true, const char *rootdir, const c
 
 	// validate directories
 	stringlistinit( &dirs );
-#if XASH_PS3
-	listdirectory(&dirs, "/dev_hdd0/game/XASH10000/USRDIR/");
-#else
 	listdirectory( &dirs, "./" );
-#endif
 	stringlistsort( &dirs );
 	Con_Printf("count: %i\n", dirs.numstrings);
 	for( i = 0; i < dirs.numstrings; i++ )
@@ -1783,7 +1779,7 @@ file_t *FS_SysOpen( const char *filepath, const char *mode )
 
 
 	file->real_length = lseek( file->handle, 0, SEEK_END );
-
+	Con_Printf("lengggggg %i\n", file->real_length);
 	// uncomment do disable write
 	//if( opt & O_CREAT )
 	//	return NULL;
@@ -1879,28 +1875,11 @@ qboolean FS_SysFolderExists( const char *path )
 #if XASH_WIN32
 	struct _stat buf;
 	if (_wstat(FS_PathToWideChar(path), &buf) < 0)
-	{
-#elif XASH_PS3
-	string newpath;
-	if (path[0] == '/')
-	{
-		Q_strncpy(newpath, path, sizeof(newpath));
-	}
-	else
-	{
-		Q_snprintf(newpath, sizeof(newpath), "%s/%s", fs_rodir, path);
-	}
-	struct stat buf;
-	if (stat(newpath, &buf) < 0)
-	{
 #else
 	struct stat buf;
 	if (stat(path, &buf) < 0)
-	{
 #endif
-		Con_Printf("GAAAAAAAA %s AAGAGAGAGGAGAGG\n", newpath);
 		return false;
-	}
 
 	return S_ISDIR( buf.st_mode );
 }
@@ -1944,7 +1923,7 @@ int FS_SetCurrentDirectory( const char *path )
 		Sys_Error( "Changing directory to %s failed: %s\n", path, buf );
 		return false;
 	}
-#elif XASH_POSIX && !XASH_PS3
+#elif XASH_POSIX
 	if( chdir( path ) < 0 )
 	{
 		Sys_Error( "Changing directory to %s failed: %s\n", path, strerror( errno ));
@@ -1973,7 +1952,7 @@ and the file index in the package if relevant
 searchpath_t *FS_FindFile( const char *name, int *index, char *fixedname, size_t len, qboolean gamedironly )
 {
 	searchpath_t	*search;
-
+	Con_Printf("WHAT %x\n", fs_searchpaths);
 	// search through the path, one element at a time
 	for( search = fs_searchpaths; search; search = search->next )
 	{
@@ -1983,6 +1962,7 @@ searchpath_t *FS_FindFile( const char *name, int *index, char *fixedname, size_t
 			continue;
 
 		pack_ind = search->pfnFindFile( search, name, fixedname, len );
+		Con_Printf("pfnfindfile %x, %s %i\n", search->type, name, pack_ind);
 		if( pack_ind >= 0 )
 		{
 			if( index )
@@ -2506,6 +2486,11 @@ static void FS_Purge( file_t *file )
 	file->ungetc = EOF;
 }
 
+void* FS_CloseFile(byte* file)
+{
+	Mem_Free(file);
+}
+
 /*
 ============
 FS_LoadFile
@@ -2527,15 +2512,15 @@ byte *FS_LoadFile( const char *path, fs_offset_t *filesizeptr, qboolean gamediro
 
 	if( path[0] == '/' || path[0] == '\\' )
 		path++;
-
+	Con_Printf("k %i\n", __LINE__);
 	if( !fs_searchpaths || FS_CheckNastyPath( path ))
 		return NULL;
 
 	search = FS_FindFile( path, &pack_ind, netpath, sizeof( netpath ), gamedironly );
-
+	Con_Printf("k %i\n",__LINE__);
 	if( !search )
 		return NULL;
-
+	Con_Printf("k %i\n", __LINE__);
 	// custom load file function for compressed files
 	if( search->pfnLoadFile )
 		return search->pfnLoadFile( search, netpath, pack_ind, filesizeptr );
@@ -2554,10 +2539,10 @@ byte *FS_LoadFile( const char *path, fs_offset_t *filesizeptr, qboolean gamediro
 
 		if( filesizeptr )
 			*filesizeptr = filesize;
-
+		Con_Printf("k %i\n", __LINE__);
 		return buf;
 	}
-
+	Con_Printf("k %i\n", __LINE__);
 	return NULL;
 }
 
@@ -3091,6 +3076,7 @@ fs_api_t g_fsapi =
 
 	// file buffer ops
 	FS_LoadFile,
+	FS_CloseFile,
 	FS_LoadDirectFile,
 	FS_WriteFile,
 

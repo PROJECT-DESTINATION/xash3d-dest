@@ -80,6 +80,8 @@ static int Sys_Start( void )
 #include "ps3structs.h"
 #include <stdlib.h>
 #include <dirent.h>
+#include <stdio.h>
+#include <fcntl.h>
 ps3std_t stds =
 {
 	malloc,
@@ -94,7 +96,24 @@ ps3std_t stds =
 	memset,
 	strcasecmp,
 	stat,
-	vsnprintf
+	vsnprintf,
+	strchr,
+	strncat,
+	strncasecmp,
+	qsort,
+	lseek,
+	open,
+	close,
+	read,
+	strncpy,
+	memmove,
+	strtol,
+	_Stof,
+	_Geterrno,
+	strrchr,
+	strstr,
+	strerror,
+	mkdir,
 };
 #endif
 

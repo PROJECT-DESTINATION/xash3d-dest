@@ -20,6 +20,23 @@ typedef struct
 	int (*strcasecmp)(const char *a, const char *b);
 	int (*stat)(const char *path, struct stat *buf);
 	int (*vsnprintf)(char *_Restrict, size_t,const char *_Restrict, _Va_list);
+	char* (*strchr)(const char* s, int c);
+	char* (*strncat)(char* a, const char* b, size_t n);
+	int (*strncasecmp)(const char *a, const char *b, size_t i);
+	void (*qsort)(void* base,size_t nmemb, size_t size, _Cmpfun* y);
+	off_t (*lseek)(int filedes, off_t offset, int wh);
+	int (*open)(const char* path, int oflag);
+	int (*close)(int filedes);
+	int (*read)(int filedes, void* buf, unsigned int nbyte);
+	char* (*strncpy)(char *s1, const char* s2, size_t n);
+	void* (*memmove)(void* s1, const void* s2, size_t n);
+	long int (*strtol)(const char* nptr, char **endptr, int base);
+	float (*_Stof)(const char* str, char** end, int what);
+	int* (*_Geterrno)();
+	char* (*strrchr)(const char *s, int c);
+	char* (*strstr)(const char* s1, const char* s2);
+	char* (*strerror)(int errnum);
+	int (*mkdir)(const char* dir, mode_t mode);
 	
 } ps3std_t;
 

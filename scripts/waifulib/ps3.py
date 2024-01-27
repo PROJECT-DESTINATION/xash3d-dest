@@ -239,24 +239,4 @@ def apply_link_ps3(self):
 			install_to=inst_to, install_from=self.link_task.outputs[:],
 			chmod=self.link_task.chmod, task=self.link_task)
 
-"""
-@TaskGen.feature('cxxprogram_ps3')
-@TaskGen.after_method('apply_link')
-def apply_fself(self):
-	elffile = self.link_task.outputs[0]
-	in_nodes = [elffile]
 
-	fselffile = elffile.change_ext('.prx')
-	out_nodes = [fselffile]
-
-	self.env.FSELFFILE = str(fselffile)
-
-	self.fself_task = self.create_task('mkfself', in_nodes)
-	self.fself_task.set_outputs(out_nodes)
-	
-	
-	inst_to = getattr(self, 'ps3_install_path', None)
-	if inst_to:
-		self.add_install_files(install_to=inst_to,
-			install_from=self.fself_task.outputs[:], chmod=Utils.O755, task=self.fself_task)
-"""

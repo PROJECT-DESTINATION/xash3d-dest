@@ -646,7 +646,7 @@ searchpath_t *FS_AddWad_Fullpath( const char *wadfile, int flags )
 	if( !wad )
 	{
 		if( errorcode != WAD_LOAD_NO_FILES )
-			Con_Reportf( S_ERROR "FS_AddWad_Fullpath: unable to load wad \"%s\"\n", wadfile );
+			Con_Printf( S_ERROR "FS_AddWad_Fullpath: unable to load wad \"%s\"\n", wadfile );
 		return NULL;
 	}
 
@@ -664,6 +664,6 @@ searchpath_t *FS_AddWad_Fullpath( const char *wadfile, int flags )
 	search->pfnSearch = FS_Search_WAD;
 	search->pfnLoadFile = W_ReadLump;
 
-	Con_Reportf( "Adding wadfile: %s (%i files)\n", wadfile, wad->numlumps );
+	Con_Printf( "Adding wadfile: %s (%i files)\n", wadfile, wad->numlumps );
 	return search;
 }

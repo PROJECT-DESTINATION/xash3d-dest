@@ -65,6 +65,7 @@ extern fs_globals_t *FI;
 #define FS_LoadFile (*g_fsapi.LoadFile)
 #define FS_LoadDirectFile (*g_fsapi.LoadDirectFile)
 #define FS_WriteFile (*g_fsapi.WriteFile)
+#define FS_CloseFile (*g_fsapi.CloseFile)
 
 // file hashing
 #define CRC32_File (*g_fsapi.CRC32_File)

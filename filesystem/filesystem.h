@@ -175,6 +175,7 @@ typedef struct fs_api_t
 
 	// file buffer ops
 	byte *(*LoadFile)( const char *path, fs_offset_t *filesizeptr, qboolean gamedironly );
+	void (*CloseFile)( byte* file );
 	byte *(*LoadDirectFile)( const char *path, fs_offset_t *filesizeptr );
 	qboolean (*WriteFile)( const char *filename, const void *data, fs_offset_t len );
 

@@ -12,7 +12,10 @@
 #include "../../filesystem/fscallback.h"
 
 
-
+#if XASH_PS3
+#define isdigit(c) ((c) >= '0' && (c) <= '9')
+#define isalpha(c) (((c) >= 'a' && (c) <= 'z') || ((c) >= 'A' && (c) <= 'Z'))
+#endif
 
 #define CHAR_SPACE ' '
 #define CHAR_TAB '\t'
@@ -100,6 +103,8 @@ static void print_escaped(const char* s)
 
 struct vdf_object* vdf_parse_buffer(const char* buffer, size_t size)
 {
+	int bleh;
+	sys_tty_write(0, "BAH\n", 4, &bleh);
 	if (!buffer)
 		return NULL;
 
@@ -117,9 +122,12 @@ struct vdf_object* vdf_parse_buffer(const char* buffer, size_t size)
 	const char* end = buffer + size;
 
 	const char* buf = NULL;
-
+	char why[2];
+	why[1] = '\n';
 	while (end > tail)
 	{
+		why[0] = *tail;
+		sys_tty_write(0, why, 2, &bleh);
 		switch (*tail)
 		{
 			case CHAR_NEWLINE:
@@ -148,21 +156,26 @@ struct vdf_object* vdf_parse_buffer(const char* buffer, size_t size)
 			case CHAR_DOUBLE_QUOTE:
 				if (tail > buffer && *(tail-1) == CHAR_BACKSLASH)
 					break;
-
+				sys_tty_write(0, "BIH\n", 4, &bleh);
 				if (!buf)
 				{
-					if ((isdigit(*tail) || *tail == '.'))
+					sys_tty_write(0, "BOH\n", 4, &bleh);
+ 					if ((isdigit((char)(*tail)) || *tail == '.'))
 					{
+						sys_tty_write(0, "BMH\n", 4, &bleh);
 						buf = tail;
 					}
 					else
 					{
+						sys_tty_write(0, "BNH\n", 4, &bleh);
 						buf = tail + 1;
 					}
+					sys_tty_write(0, "BAH\n", 4, &bleh);
 				}
 				else if (o->key)
-EndOfValue:
 				{
+				EndOfValue:
+					sys_tty_write(0, "BLH\n", 4, &bleh);
 					size_t len = tail - buf;
 					size_t digits = 0;
 					size_t chars = 0;
@@ -216,7 +229,7 @@ EndOfValue:
 							break;
 
 						default:
-							assert(0);
+							//assert(0);
 							break;
 					}
 
@@ -225,7 +238,7 @@ EndOfValue:
 					if (o->parent && o->parent->type == VDF_TYPE_ARRAY)
 					{
 						o = o->parent;
-						assert(o->type == VDF_TYPE_ARRAY);
+						//assert(o->type == VDF_TYPE_ARRAY);
 
 						o->data.data_array.len++;
 						o->data.data_array.data_value = realloc(o->data.data_array.data_value, (sizeof(void*)) * (o->data.data_array.len + 1));
@@ -244,11 +257,12 @@ EndOfValue:
 					o->key = local_strndup_escape(buf, len);
 					buf = NULL;
 				}
+				sys_tty_write(0, "BEH\n", 4, &bleh);
 				break;
 
 			case CHAR_OPEN_CURLY_BRACKET:
-				assert(!buf);
-				assert(o->type == VDF_TYPE_NONE);
+				//assert(!buf);
+				//assert(o->type == VDF_TYPE_NONE);
 
 				if (o->parent && o->parent->type == VDF_TYPE_ARRAY)
 					o->parent->data.data_array.len++;
@@ -266,15 +280,16 @@ EndOfValue:
 				break;
 
 			case CHAR_CLOSED_CURLY_BRACKET:
-				assert(!buf);
-
+				//assert(!buf);
+				sys_tty_write(0, "AAA\n", 4, &bleh);
 
 				o = o->parent;
-				assert(o);
+				//assert(o);
 				if (o->parent)
 				{
+					sys_tty_write(0, "BBB\n", 4, &bleh);
 					o = o->parent;
-					assert(o->type == VDF_TYPE_ARRAY);
+					//assert(o->type == VDF_TYPE_ARRAY);
 
 					o->data.data_array.data_value = realloc(o->data.data_array.data_value, (sizeof(void*)) * (o->data.data_array.len + 1));
 					o->data.data_array.data_value[o->data.data_array.len] = malloc(sizeof(struct vdf_object)),
@@ -288,6 +303,8 @@ EndOfValue:
 				else
 				{
 					root_object->type = VDF_TYPE_ARRAY;
+					sys_tty_write(0, "CCC\n", 4, &bleh);
+
 					return root_object;
 				}
 
@@ -304,7 +321,7 @@ EndOfValue:
 				if (!buf)
 				{
 					struct vdf_object* prev = o->parent->data.data_array.data_value[o->parent->data.data_array.len-1];
-					assert(!prev->conditional);
+					//assert(!prev->conditional);
 
 					buf = tail+1;
 
@@ -343,11 +360,14 @@ struct vdf_object* vdf_parse_file(const char* path)
 		return o;
 	fs_offset_t file_size;
 	char* buffer;
-	
+	int af;
 	file_t* fd = FS_Open(path, "r", true);
 	if (!fd)
 	{
-		buffer = (char*)FS_LoadFile(path, &file_size, true);
+		buffer = (char*)FS_LoadFile(path, &file_size, false);
+		if (!buffer)
+			sys_tty_write(0, "A\n", 2, &af);
+
 	}
 	else
 	{
@@ -355,41 +375,51 @@ struct vdf_object* vdf_parse_file(const char* path)
 		file_size = FS_Tell(fd);
 		FS_Seek(fd, 0L, SEEK_SET);
 	}
-		
-   
+	if (file_size & 0x80000000)
+	{
+		sys_tty_write(0, "FFFF\n", 5, &af);
+	}
+	
 	if (file_size)
 	{
+		sys_tty_write(0, "FAFF\n", 5, &af);
 		if (fd)
 		{
 			buffer = malloc(file_size);
 			FS_Read(fd, buffer, file_size);
 		}
-
+		if(!buffer)
+			sys_tty_write(0, "E\n", 2, &af);
 		o = vdf_parse_buffer(buffer, file_size);
-		free(buffer);
+		sys_tty_write(0, "D\n", 2, &af);
+		if(fd)
+			free(buffer);
+		else
+			FS_CloseFile(buffer);
+		sys_tty_write(0, "O\n", 2, &af);
 	}
 	if (fd)
 	{
 		FS_Close(fd);
 	}
-
+	sys_tty_write(0, "N\n", 2, &af);
 	return o;
 }
 
 
 size_t vdf_object_get_array_length(const struct vdf_object* o)
 {
-	assert(o);
-	assert(o->type == VDF_TYPE_ARRAY);
+	//assert(o);
+	//assert(o->type == VDF_TYPE_ARRAY);
 
 	return o->data.data_array.len;
 }
 
 struct vdf_object* vdf_object_index_array(const struct vdf_object* o, const size_t index)
 {
-	assert(o);
-	assert(o->type == VDF_TYPE_ARRAY);
-	assert(o->data.data_array.len > index);
+	//assert(o);
+	//assert(o->type == VDF_TYPE_ARRAY);
+	//assert(o->data.data_array.len > index);
 
 	return o->data.data_array.data_value[index];
 }
@@ -415,14 +445,14 @@ struct vdf_object* vdf_object_index_array_str(const struct vdf_object* o, const 
 
 const char* vdf_object_get_string(const struct vdf_object* o)
 {
-	assert(o->type == VDF_TYPE_STRING);
+	//assert(o->type == VDF_TYPE_STRING);
 
 	return o->data.data_string.str;
 }
 
 int vdf_object_get_int(const struct vdf_object* o)
 {
-	assert(o->type == VDF_TYPE_INT);
+	//assert(o->type == VDF_TYPE_INT);
 
 	return o->data.data_int;
 }
@@ -468,7 +498,7 @@ static void vdf_print_object_indent(const struct vdf_object* o, const int l)
 
 		default:
 		case VDF_TYPE_NONE:
-			assert(0);
+			//assert(0);
 			break;
 	}
 

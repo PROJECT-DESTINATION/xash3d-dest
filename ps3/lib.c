@@ -3,6 +3,8 @@
 
 extern ps3std_t* stds;
 
+char curdir[260];
+
 void* malloc(size_t s)
 {
 	return stds->malloc(s);
@@ -38,9 +40,25 @@ void* memset(void*s, int c, size_t n)
 	return stds->memset(s,c,n);
 }
 
+int chdir(const char* path)
+{
+	int l = strlen(path)+1;
+	if(l > 260)
+	{
+		l = 260;
+	}
+	memcpy(curdir,path,l);
+	curdir[259] = '\x00';
+	return 0;
+}
+
 DIR *opendir(const char* name)
 {
-	return stds->opendir(name);
+	char temp[260];
+	strncat(temp,curdir,260);
+	strncat(temp,"/",260);
+	strncat(temp,name,260);
+	return stds->opendir(temp);
 }
 int closedir(DIR* dirp)
 {
@@ -54,12 +72,96 @@ int strcasecmp(const char *a, const char *b)
 {
 	return stds->strcasecmp(a,b);
 }
+int strncasecmp(const char *a, const char *b, size_t i)
+{
+	return stds->strncasecmp(a,b,i);
+}
 int stat(const char *path, struct stat *buf)
 {
-	return stds->stat(path,buf);
+	char temp[260];
+	strncat(temp,curdir,260);
+	strncat(temp,"/",260);
+	strncat(temp,path,260);
+	return stds->stat(temp,buf);
 }
 
 int vsnprintf(char *_Restrict A, size_t B,const char *_Restrict C, _Va_list D)
 {
 	return stds->vsnprintf(A,B,C,D);
+}
+
+char* strchr(const char* s, int c)
+{
+	return stds->strchr(s,c);
+}
+
+char* strncat(char* a, const char* b, size_t n)
+{
+	return stds->strncat(a,b,n);
+}
+int open(const char* path, int oflag, ...)
+{
+	char temp[260];
+	strncat(temp,curdir,260);
+	strncat(temp,"/",260);
+	strncat(temp,path,260);
+	return stds->open(temp,oflag);
+}
+void qsort(void* base,size_t nmemb, size_t size,_Cmpfun* y)
+{
+	return stds->qsort(base,nmemb,size,y);
+}
+off_t lseek(int filedes, off_t offset, int wh)
+{
+	return stds->lseek(filedes,offset,wh);
+}
+int close(int filedes)
+{
+	return stds->close(filedes);
+}
+int read(int filedes, void* buf, unsigned int nbyte)
+{
+	return stds->read(filedes,buf,nbyte);
+}
+int isdigit(int c)
+{
+	return c >= '0' && c <= '9';
+}
+char* strncpy(char *s1, const char* s2, size_t n)
+{
+	return stds->strncpy(s1,s2,n);
+}
+
+void* memmove(void* s1, const void* s2, size_t n)
+{
+	return stds->memmove(s1,s2,n);
+}
+long int strtol(const char* nptr, char **endptr, int base)
+{
+	return stds->strtol(nptr,endptr,base);
+}
+
+float _Stof(const char* str, char** end, int what)
+{
+	return stds->_Stof(str,end,what);
+}
+int *_Geterrno()
+{
+	return stds->_Geterrno();
+}
+char* strrchr(const char *s, int c)
+{
+	return stds->strrchr(s,c);
+}
+char* strstr(const char* s1, const char* s2)
+{
+	return stds->strstr(s1,s2);
+}
+char* strerror(int errnum)
+{
+	return stds->strerror(errnum);
+}
+int mkdir(const char* dir, mode_t mode)
+{
+	return stds->mkdir(dir, mode);
 }

@@ -154,14 +154,13 @@ static int FS_FindDirEntry( dir_t *dir, const char *name )
 	// look for the file (binary search)
 	left = 0;
 	right = dir->numentries - 1;
-
 	while( left <= right )
 	{
 		int   middle = (left + right) / 2;
 		int	diff;
 
 		diff = Q_stricmp( dir->entries[middle].name, name );
-
+		//Con_Printf("FS_FindDirEntry: %s %s\n", dir->entries[middle].name, name);
 		// found it
 		if( !diff )
 			return middle;
@@ -333,35 +332,35 @@ qboolean FS_FixFileCase( dir_t *dir, const char *path, char *dst, const size_t l
 
 			uptodate = true;
 		}
-
+		
 		dir = &dir->entries[ret];
 		temp = i;
 		if( !FS_AppendToPath( dst, &temp, len, dir->name, path, "case fix" ))
 			return false;
-
+		
 		if( !uptodate && !FS_SysFileOrFolderExists( dst )) // file not found, rescan...
 		{
 			dst[i] = 0; // strip failed part
-
+			
 			// if we're creating files or folders, we don't care if path doesn't exist
 			// so copy everything that's left and exit without an error
 			if(( ret = FS_MaybeUpdateDirEntries( dir, dst, entryname )) < 0 )
 				return createpath ? FS_AppendToPath( dst, &i, len, prev, path, "create path rescan" ) : false;
-
+			
 			dir = &dir->entries[ret];
 			if( !FS_AppendToPath( dst, &temp, len, dir->name, path, "case fix rescan" ))
 				return false;
 		}
 		i = temp;
-
+		
 		// end of string, found file, return
 		if( next[0] == '\0' || ( next[0] == '/' && next[1] == '\0' ))
 			break;
-
+		
 		if( !FS_AppendToPath( dst, &i, len, "/", path, "path separator" ))
 			return false;
 	}
-
+	
 	return true;
 }
 
@@ -382,7 +381,7 @@ static int FS_FindFile_DIR( searchpath_t *search, const char *path, char *fixedn
 
 	if( !FS_FixFileCase( search->dir, path, netpath, sizeof( netpath ), false ))
 		return -1;
-
+	Con_Printf("FS_FindFile_DIR %i\n", __LINE__);
 	if( FS_SysFileExists( netpath ))
 	{
 		// return fixed case file name only local for that searchpath
