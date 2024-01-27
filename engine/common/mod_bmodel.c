@@ -3375,7 +3375,7 @@ loading and processing bmodel
 */
 static qboolean Mod_LoadBmodelLumps( model_t *mod, const byte *mod_base, qboolean isworld )
 {
-	const dheader_t *header = (const dheader_t *)mod_base;
+	dheader_t *header = (dheader_t *)mod_base;
 	const dextrahdr_t	*extrahdr = (const dextrahdr_t *)(mod_base + sizeof( dheader_t ));
 	dbspmodel_t	*bmod = &srcmodel;
 	char		wadvalue[2048];
@@ -3385,6 +3385,17 @@ static qboolean Mod_LoadBmodelLumps( model_t *mod, const byte *mod_base, qboolea
 	// always reset the intermediate struct
 	memset( bmod, 0, sizeof( dbspmodel_t ));
 	memset( &loadstat, 0, sizeof( loadstat_t ));
+
+
+#if XASH_BIG_ENDIAN
+	LittleLongSW(header->version);
+	for (int i = 0; i < HEADER_LUMPS; i++)
+	{
+		LittleLongSW(header->lumps[i].filelen);
+		LittleLongSW(header->lumps[i].fileofs);
+	}
+#endif
+
 
 	Q_strncpy( loadstat.name, mod->name, sizeof( loadstat.name ));
 	wadvalue[0] = '\0';
@@ -3541,7 +3552,7 @@ return real entities lump (for bshift swapped lumps)
 */
 qboolean Mod_TestBmodelLumps( file_t *f, const char *name, const byte *mod_base, qboolean silent, dlump_t *entities )
 {
-	const dheader_t	*header = (const dheader_t *)mod_base;
+	dheader_t	*header = (dheader_t *)mod_base;
 	const dextrahdr_t *extrahdr = (const dextrahdr_t *)( mod_base + sizeof( dheader_t ));
 	int	i, flags = LUMP_TESTONLY;
 
@@ -3552,6 +3563,16 @@ qboolean Mod_TestBmodelLumps( file_t *f, const char *name, const byte *mod_base,
 	Q_strncpy( loadstat.name, name, sizeof( loadstat.name ));
 	if( silent )
 		SetBits( flags, LUMP_SILENT );
+#if XASH_BIG_ENDIAN
+	LittleLongSW(header->version);
+	for (int i = 0; i < HEADER_LUMPS; i++)
+	{
+		LittleLongSW(header->lumps[i].filelen);
+		LittleLongSW(header->lumps[i].fileofs);
+	}
+#endif
+
+
 
 #ifndef SUPPORT_BSP2_FORMAT
 	if( header->version == QBSP2_VERSION )

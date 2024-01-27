@@ -290,7 +290,7 @@ model_t *Mod_LoadModel( model_t *mod, qboolean crash )
 	mod->type = mod_bad;
 
 	// call the apropriate loader
-	switch( *(uint *)buf )
+	switch( LittleLong(*(uint *)buf) )
 	{
 	case IDSTUDIOHEADER:
 		Mod_LoadStudioModel( mod, buf, &loaded, tempname, length);

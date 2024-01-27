@@ -158,7 +158,9 @@ Then you can use another oneliner to query all variables:
 //================================================================
 
 #if !defined XASH_ENDIANNESS
-	#if defined XASH_WIN32 || __LITTLE_ENDIAN__
+	#if defined XASH_PS3
+		#define XASH_BIG_ENDIAN 1
+	#elif defined XASH_WIN32 || __LITTLE_ENDIAN__
 		//!!! Probably all WinNT installations runs in little endian
 		#define XASH_LITTLE_ENDIAN 1
 	#elif __BIG_ENDIAN__

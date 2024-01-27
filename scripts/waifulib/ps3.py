@@ -41,10 +41,10 @@ class cxxprogram_ps3(cxx.cxxprogram):
 	run_str = '${LINK_SNC} ${LINKFLAGS} -oformat=fself ${LIBPATH_ST:LIBPATH} ${LIB_ST:LIB} ${LIBPATH_ST:STLIBPATH} ${LIB_ST:STLIB} --start-group libc.a ${CXXLNK_SRC_F}${SRC} ${LIB} --end-group ${SNCLNK_TGT_F} ${TGT[0].abspath()}'
 
 class cxx_ps3(cxx.cxx):
-	run_str = '${SNC} ${ARCH_ST:ARCH} ${CXXFLAGS} ${FRAMEWORKPATH_ST:FRAMEWORKPATH} -I"." ${SNCPATH_ST:INCPATHS} ${DEFINES_ST:DEFINES} ${SNC_SRC_F}${SRC} ${SNC_TGT_F}${TGT[0].abspath()} ${CPPFLAGS}'
+	run_str = '${SNC} ${ARCH_ST:ARCH} -D__PS3__ ${CXXFLAGS} ${FRAMEWORKPATH_ST:FRAMEWORKPATH} -I"." ${SNCPATH_ST:INCPATHS} ${DEFINES_ST:DEFINES} ${SNC_SRC_F}${SRC} ${SNC_TGT_F}${TGT[0].abspath()} ${CPPFLAGS}'
 
 class c_ps3(c.c):
-	run_str = '${SNC} ${ARCH_ST:ARCH} ${CFLAGS} ${FRAMEWORKPATH_ST:FRAMEWORKPATH} -I"." ${SNCPATH_ST:INCPATHS} ${DEFINES_ST:DEFINES} ${SNC_SRC_F}${SRC} ${SNC_TGT_F}${TGT[0].abspath()} ${CPPFLAGS}'
+	run_str = '${SNC} ${ARCH_ST:ARCH} -D__PS3__ ${CFLAGS} ${FRAMEWORKPATH_ST:FRAMEWORKPATH} -I"." ${SNCPATH_ST:INCPATHS} ${DEFINES_ST:DEFINES} ${SNC_SRC_F}${SRC} ${SNC_TGT_F}${TGT[0].abspath()} ${CPPFLAGS}'
 	
 
 class cxxshlib_ps3(cxxprogram_ps3):
