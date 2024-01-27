@@ -788,8 +788,13 @@ void Host_Frame( float time )
 
 	t1 = Sys_DoubleTime();
 
-	if( host.framecount == 0 )
-		Con_DPrintf( "Time to first frame: %.3f seconds\n", t1 - host.starttime );
+	if (host.framecount == 0)
+	{
+		Con_DPrintf("Time to first frame: %.3f seconds\n", t1 - host.starttime);
+#if XASH_PS3
+		Cbuf_AddText("map bounce\n");
+#endif
+	}
 
 	Host_InputFrame ();  // input frame
 	Host_ClientBegin (); // begin client

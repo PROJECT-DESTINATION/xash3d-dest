@@ -132,9 +132,12 @@ void *COM_GetProcAddress( void *hInstance, const char *name )
 {
 	Con_Printf("loading %s\n",name);
 	map_void_t* exports = hInstance;
-	void* gotten = *map_get(exports,name);
-	Con_Printf("it is: %x\n",gotten);
-	return gotten;
+	void** gotten = map_get(exports,name);
+	if(gotten)
+	{
+		return *gotten;
+	}
+	return 0;
 }
 
 void *COM_FunctionFromName( void *hInstance, const char *pName )
