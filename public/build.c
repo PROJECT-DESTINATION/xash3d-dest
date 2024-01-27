@@ -121,6 +121,8 @@ const char *Q_PlatformStringByID( const int platform )
 		return "nswitch";
 	case PLATFORM_PSVITA:
 		return "psvita";
+	case PLATFORM_PS3:
+		return "ps3";
 	}
 
 	assert( 0 );

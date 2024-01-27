@@ -54,6 +54,8 @@ int chdir(const char* path)
 
 DIR *opendir(const char* name)
 {
+	if(name[0] == '/')
+		return stds->opendir(name);
 	char temp[260];
 	strncat(temp,curdir,260);
 	strncat(temp,"/",260);
@@ -78,6 +80,8 @@ int strncasecmp(const char *a, const char *b, size_t i)
 }
 int stat(const char *path, struct stat *buf)
 {
+	if(path[0] == '/')
+		return stds->stat(path,buf);
 	char temp[260];
 	strncat(temp,curdir,260);
 	strncat(temp,"/",260);
@@ -101,6 +105,8 @@ char* strncat(char* a, const char* b, size_t n)
 }
 int open(const char* path, int oflag, ...)
 {
+	if(path[0] == '/')
+		return stds->open(path,oflag);
 	char temp[260];
 	strncat(temp,curdir,260);
 	strncat(temp,"/",260);
@@ -163,5 +169,15 @@ char* strerror(int errnum)
 }
 int mkdir(const char* dir, mode_t mode)
 {
-	return stds->mkdir(dir, mode);
+	if(dir[0] == '/')
+		return stds->mkdir(dir, mode);
+	char temp[260];
+	strncat(temp,curdir,260);
+	strncat(temp,"/",260);
+	strncat(temp,dir,260);
+	return stds->mkdir(temp, mode);
+}
+int write(int filedes, const void* buf, unsigned int nbyte)
+{
+	return stds->write(filedes,buf,nbyte);
 }

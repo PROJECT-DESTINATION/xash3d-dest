@@ -345,7 +345,7 @@ static wfile_t *W_Open( const char *filename, int *error )
 		return NULL;
 	}
 
-	lumpcount = header.numlumps;
+	lumpcount = LittleLong(header.numlumps);
 
 	if( lumpcount >= MAX_FILES_IN_WAD )
 	{
@@ -361,7 +361,7 @@ static wfile_t *W_Open( const char *filename, int *error )
 	}
 	else if( error ) *error = WAD_LOAD_OK;
 
-	wad->infotableofs = header.infotableofs; // save infotableofs position
+	wad->infotableofs = LittleLong(header.infotableofs); // save infotableofs position
 
 	if( FS_Seek( wad->handle, wad->infotableofs, SEEK_SET ) == -1 )
 	{
@@ -375,6 +375,14 @@ static wfile_t *W_Open( const char *filename, int *error )
 
 	// NOTE: lumps table can be reallocated for O_APPEND mode
 	srclumps = (dlumpinfo_t *)Mem_Malloc( wad->mempool, lat_size );
+
+	
+#if XASH_BIG_ENDIAN
+	srclumps->size = LittleLong(srclumps->size);
+	srclumps->disksize = LittleLong(srclumps->disksize);
+	srclumps->filepos = LittleLong(srclumps->filepos);
+#endif
+
 
 	if( FS_Read( wad->handle, srclumps, lat_size ) != lat_size )
 	{

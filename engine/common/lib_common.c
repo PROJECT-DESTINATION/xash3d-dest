@@ -206,8 +206,12 @@ static void COM_GenerateServerLibraryPath( char *out, size_t size )
 #else // XASH_APPLE
 	Q_strncpy( dllpath, GI->game_dll_linux, sizeof( dllpath ) );
 #endif
-
+#if XASH_PS3
+	ext = "sprx";
+#else
 	ext = COM_FileExtension( dllpath );
+#endif
+
 	COM_StripExtension( dllpath );
 	COM_StripIntelSuffix( dllpath );
 
@@ -243,11 +247,13 @@ void COM_GetCommonLibraryPath( ECommonLibraryType eLibType, char *out, size_t si
 	case LIBRARY_SERVER:
 		if( SI.gamedll[0] )
 		{
+			Con_Printf("SI.gamedll %s\n", SI.gamedll);
 			Q_strncpy( out, SI.gamedll, size );
 		}
 		else
 		{
 			COM_GenerateServerLibraryPath( out, size );
+			Con_Printf("COM_GenerateServerLibraryPath %s\n", out);
 		}
 		break;
 	default:

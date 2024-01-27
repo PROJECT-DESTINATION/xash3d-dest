@@ -55,7 +55,9 @@ struct dir_s
 
 static qboolean Platform_GetDirectoryCaseSensitivity( const char *dir )
 {
-#if XASH_WIN32 || XASH_PSVITA || XASH_NSWITCH
+#if XASH_PS3
+	return true;
+#elif XASH_WIN32 || XASH_PSVITA || XASH_NSWITCH
 	return false;
 #elif XASH_LINUX && defined( FS_IOC_GETFLAGS )
 	int flags = 0;
@@ -268,8 +270,8 @@ static int FS_MaybeUpdateDirEntries( dir_t *dir, const char *path, const char *e
 static inline qboolean FS_AppendToPath( char *dst, size_t *pi, const size_t len, const char *src, const char *path, const char *err )
 {
 	size_t i = *pi;
-
 	i += Q_strncpy( &dst[i], src, len - i );
+	Con_Printf("FS_AppendToPath: %s | Currently: %s\n", src, dst);
 	*pi = i;
 
 	if( i >= len )

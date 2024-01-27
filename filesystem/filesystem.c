@@ -417,7 +417,7 @@ void FS_AddGameDirectory( const char *dir, uint flags )
 	{
 		if( archive->type == SEARCHPATH_WAD ) // HACKHACK: wads need direct paths but only in this function
 			FS_AllowDirectPaths( true );
-
+		Con_Printf("\n\nArchvie ext: %s\n\n", archive->ext);
 		for( i = 0; i < list.numstrings; i++ )
 		{
 			ext = COM_FileExtension( list.strings[i] );
