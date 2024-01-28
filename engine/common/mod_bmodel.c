@@ -221,13 +221,13 @@ static mlumpinfo_t		extlumps[EXTRA_LUMPS] =
 
 static mip_t *Mod_GetMipTexForTexture( dbspmodel_t *bmod, int i )
 {
-	if( i < 0 || i >= bmod->textures->nummiptex )
+	if( i < 0 || i >= LittleLong(bmod->textures->nummiptex) )
 		return NULL;
 
-	if( bmod->textures->dataofs[i] == -1 )
+	if(LittleLong(bmod->textures->dataofs[i]) == -1 )
 		return NULL;
 
-	return (mip_t *)((byte *)bmod->textures + bmod->textures->dataofs[i] );
+	return (mip_t *)((byte *)bmod->textures + LittleLong(bmod->textures->dataofs[i]) );
 }
 
 // Returns index of WAD that texture was found in, or -1 if not found.
@@ -958,7 +958,7 @@ static qboolean Mod_CheckWaterAlphaSupport( model_t *mod, dbspmodel_t *bmod )
 	int		i, j;
 	const byte	*pvs;
 
-	if( bmod->visdatasize <= 0 )
+	if(LittleLong(bmod->visdatasize) <= 0 )
 		return true;
 
 	// check all liquid leafs to see if they can see into empty leafs, if any
@@ -1719,23 +1719,23 @@ static void Mod_LoadSubmodels( model_t *mod, dbspmodel_t *bmod )
 		for( j = 0; j < 3; j++ )
 		{
 			// reset empty bounds to prevent error
-			if( in->mins[j] == 999999.0f )
+			if(LittleFloat(in->mins[j]) == 999999.0f )
 				in->mins[j] = 0.0f;
-			if( in->maxs[j] == -999999.0f)
+			if(LittleFloat(in->maxs[j]) == -999999.0f)
 				in->maxs[j] = 0.0f;
 
 			// spread the mins / maxs by a unit
-			out->mins[j] = in->mins[j] - 1.0f;
-			out->maxs[j] = in->maxs[j] + 1.0f;
-			out->origin[j] = in->origin[j];
+			out->mins[j] = LittleFloat(in->mins[j]) - 1.0f;
+			out->maxs[j] = LittleFloat(in->maxs[j]) + 1.0f;
+			out->origin[j] = LittleFloat(in->origin[j]);
 		}
 
 		for( j = 0; j < MAX_MAP_HULLS; j++ )
-			out->headnode[j] = in->headnode[j];
+			out->headnode[j] = LittleLong(in->headnode[j]);
 
-		out->visleafs = in->visleafs;
-		out->firstface = in->firstface;
-		out->numfaces = in->numfaces;
+		out->visleafs = LittleLong(in->visleafs);
+		out->firstface = LittleLong(in->firstface);
+		out->numfaces = LittleLong(in->numfaces);
 
 		if( i == 0 && bmod->isworld )
 			continue; // skip the world to save mem
@@ -1942,7 +1942,7 @@ static void Mod_LoadPlanes( model_t *mod, dbspmodel_t *bmod )
 		out->signbits = 0;
 		for( j = 0; j < 3; j++ )
 		{
-			out->normal[j] = in->normal[j];
+			out->normal[j] = LittleFloat(in->normal[j]);
 
 			if( out->normal[j] < 0.0f )
 				SetBits( out->signbits, BIT( j ));
@@ -1951,8 +1951,8 @@ static void Mod_LoadPlanes( model_t *mod, dbspmodel_t *bmod )
 		if( VectorLength( out->normal ) < 0.5f )
 			Con_Printf( S_ERROR "bad normal for plane #%i\n", i );
 
-		out->dist = in->dist;
-		out->type = in->type;
+		out->dist = LittleFloat(in->dist);
+		out->type = LittleLong(in->type);
 	}
 }
 
@@ -1975,9 +1975,13 @@ static void Mod_LoadVertexes( model_t *mod, dbspmodel_t *bmod )
 
 	for( i = 0; i < bmod->numvertexes; i++, in++, out++ )
 	{
+		in->point[0] = LittleFloat(in->point[0]);
+		in->point[1] = LittleFloat(in->point[1]);
+		in->point[2] = LittleFloat(in->point[2]);
 		if( bmod->isworld )
 			AddPointToBounds( in->point, world.mins, world.maxs );
 		VectorCopy( in->point, out->position );
+		
 	}
 
 	if( !bmod->isworld ) return;
@@ -2035,7 +2039,14 @@ Mod_LoadSurfEdges
 static void Mod_LoadSurfEdges( model_t *mod, dbspmodel_t *bmod )
 {
 	mod->surfedges = Mem_Malloc( mod->mempool, bmod->numsurfedges * sizeof( dsurfedge_t ));
+#if XASH_PS3
+	for (int i = 0; i < bmod->numsurfedges; i++)
+	{
+		mod->surfedges[i] = LittleLong(bmod->surfedges[i]);
+	}
+#else
 	memcpy( mod->surfedges, bmod->surfedges, bmod->numsurfedges * sizeof( dsurfedge_t ));
+#endif
 	mod->numsurfedges = bmod->numsurfedges;
 }
 
@@ -2058,9 +2069,9 @@ static void Mod_LoadMarkSurfaces( model_t *mod, dbspmodel_t *bmod )
 
 		for( i = 0; i < bmod->nummarkfaces; i++, in++ )
 		{
-			if( *in < 0 || *in >= mod->numsurfaces )
+			if(LittleLong(*in) < 0 || LittleLong(*in) >= mod->numsurfaces )
 				Host_Error( "Mod_LoadMarkFaces: bad surface number in '%s'\n", mod->name );
-			out[i] = mod->surfaces + *in;
+			out[i] = mod->surfaces + LittleLong(*in);
 		}
 	}
 	else
@@ -2069,9 +2080,9 @@ static void Mod_LoadMarkSurfaces( model_t *mod, dbspmodel_t *bmod )
 
 		for( i = 0; i < bmod->nummarkfaces; i++, in++ )
 		{
-			if( *in < 0 || *in >= mod->numsurfaces )
+			if( LittleShort(*in) < 0 || LittleShort(*in) >= mod->numsurfaces )
 				Host_Error( "Mod_LoadMarkFaces: bad surface number in '%s'\n", mod->name );
-			out[i] = mod->surfaces + *in;
+			out[i] = mod->surfaces + LittleShort(*in);
 		}
 	}
 }
@@ -2124,7 +2135,14 @@ static void Mod_LoadTextureData( model_t *mod, dbspmodel_t *bmod, int textureInd
 		m_width = mipTex->width;
 		m_height = mipTex->height;
 		memcpy(&m_offsets, &mipTex->offsets, sizeof(m_offsets));
+		
 	}
+	LittleLongSW(m_width);
+	LittleLongSW(m_height);
+	LittleLongSW(m_offsets[0]);
+	LittleLongSW(m_offsets[1]);
+	LittleLongSW(m_offsets[2]);
+	LittleLongSW(m_offsets[3]);
 
 	if( FBitSet( host.features, ENGINE_IMPROVED_LINETRACE ) && m_name[0] == '{')
 		SetBits( txFlags, TF_KEEP_SOURCE ); // Paranoia2 texture alpha-tracing
@@ -2442,7 +2460,7 @@ static void Mod_LoadTextures( model_t *mod, dbspmodel_t *bmod )
 #endif
 
 	lump = bmod->textures;
-
+	LittleLongSW(lump->nummiptex);
 	if( bmod->texdatasize < 1 || !lump || lump->nummiptex < 1 )
 	{
 		// no textures
@@ -2585,37 +2603,37 @@ static void Mod_LoadSurfaces( model_t *mod, dbspmodel_t *bmod )
 		{
 			dface32_t	*in = &bmod->surfaces32[i];
 
-			if(( in->firstedge + in->numedges ) > mod->numsurfedges )
+			if(( LittleLong(in->firstedge) + LittleLong(in->numedges) ) > mod->numsurfedges )
 				continue;	// corrupted level?
-			out->firstedge = in->firstedge;
-			out->numedges = in->numedges;
+			out->firstedge = LittleLong(in->firstedge);
+			out->numedges = LittleLong(in->numedges);
 			if( in->side ) SetBits( out->flags, SURF_PLANEBACK );
-			out->plane = mod->planes + in->planenum;
-			out->texinfo = mod->texinfo + in->texinfo;
+			out->plane = mod->planes + LittleLong(in->planenum);
+			out->texinfo = mod->texinfo + LittleLong(in->texinfo);
 
 			for( j = 0; j < MAXLIGHTMAPS; j++ )
 				out->styles[j] = in->styles[j];
-			lightofs = in->lightofs;
+			lightofs = LittleLong(in->lightofs);
 		}
 		else
 		{
 			dface_t	*in = &bmod->surfaces[i];
 
-			if(( in->firstedge + in->numedges ) > mod->numsurfedges )
+			if(( LittleLong(in->firstedge) + LittleShort(in->numedges) ) > mod->numsurfedges )
 			{
 				Con_Reportf( S_ERROR "bad surface %i from %zu\n", i, bmod->numsurfaces );
 				continue;
 			}
 
-			out->firstedge = in->firstedge;
-			out->numedges = in->numedges;
+			out->firstedge = LittleLong(in->firstedge);
+			out->numedges = LittleShort(in->numedges);
 			if( in->side ) SetBits( out->flags, SURF_PLANEBACK );
-			out->plane = mod->planes + in->planenum;
-			out->texinfo = mod->texinfo + in->texinfo;
+			out->plane = mod->planes + LittleShort(in->planenum);
+			out->texinfo = mod->texinfo + LittleShort(in->texinfo);
 
 			for( j = 0; j < MAXLIGHTMAPS; j++ )
 				out->styles[j] = in->styles[j];
-			lightofs = in->lightofs;
+			lightofs = LittleLong(in->lightofs);
 		}
 
 		tex = out->texinfo->texture;
@@ -2854,18 +2872,18 @@ static void Mod_LoadNodes( model_t *mod, dbspmodel_t *bmod )
 
 			for( j = 0; j < 3; j++ )
 			{
-				out->minmaxs[j+0] = in->mins[j];
-				out->minmaxs[j+3] = in->maxs[j];
+				out->minmaxs[j+0] = LittleFloat(in->mins[j]);
+				out->minmaxs[j+3] = LittleFloat(in->maxs[j]);
 			}
 
-			p = in->planenum;
+			p = LittleLong(in->planenum);
 			out->plane = mod->planes + p;
-			out->firstsurface = in->firstface;
-			out->numsurfaces = in->numfaces;
+			out->firstsurface = LittleLong(in->firstface);
+			out->numsurfaces = LittleLong(in->numfaces);
 
 			for( j = 0; j < 2; j++ )
 			{
-				p = in->children[j];
+				p = LittleLong(in->children[j]);
 				if( p >= 0 ) out->children[j] = mod->nodes + p;
 				else out->children[j] = (mnode_t *)(mod->leafs + ( -1 - p ));
 			}
@@ -2876,18 +2894,18 @@ static void Mod_LoadNodes( model_t *mod, dbspmodel_t *bmod )
 
 			for( j = 0; j < 3; j++ )
 			{
-				out->minmaxs[j+0] = in->mins[j];
-				out->minmaxs[j+3] = in->maxs[j];
+				out->minmaxs[j+0] = LittleShort(in->mins[j]);
+				out->minmaxs[j + 3] = LittleShort(in->maxs[j]);
 			}
 
-			p = in->planenum;
+			p = LittleLong(in->planenum);
 			out->plane = mod->planes + p;
-			out->firstsurface = in->firstface;
-			out->numsurfaces = in->numfaces;
+			out->firstsurface = LittleShort(in->firstface);
+			out->numsurfaces = LittleShort(in->numfaces);
 
 			for( j = 0; j < 2; j++ )
 			{
-				p = in->children[j];
+				p = LittleShort(in->children[j]);
 				if( p >= 0 ) out->children[j] = mod->nodes + p;
 				else out->children[j] = (mnode_t *)(mod->leafs + ( -1 - p ));
 			}
@@ -2988,18 +3006,18 @@ static void Mod_LoadLeafs( model_t *mod, dbspmodel_t *bmod )
 
 			for( j = 0; j < 3; j++ )
 			{
-				out->minmaxs[j+0] = in->mins[j];
-				out->minmaxs[j+3] = in->maxs[j];
+				out->minmaxs[j+0] = LittleShort(in->mins[j]);
+				out->minmaxs[j+3] = LittleShort(in->maxs[j]);
 			}
 
-			out->contents = in->contents;
-			p = in->visofs;
+			out->contents = LittleLong(in->contents);
+			p = LittleLong(in->visofs);
 
 			for( j = 0; j < 4; j++ )
 				out->ambient_sound_level[j] = in->ambient_level[j];
 
-			out->firstmarksurface = mod->marksurfaces + in->firstmarksurface;
-			out->nummarksurfaces = in->nummarksurfaces;
+			out->firstmarksurface = mod->marksurfaces + LittleShort(in->firstmarksurface);
+			out->nummarksurfaces = LittleShort(in->nummarksurfaces);
 		}
 
 		if( bmod->isworld )
@@ -3012,7 +3030,7 @@ static void Mod_LoadLeafs( model_t *mod, dbspmodel_t *bmod )
 			// ignore visofs errors on leaf 0 (solid)
 			if( p >= 0 && out->cluster >= 0 && mod->visdata )
 			{
-				if( p < bmod->visdatasize )
+				if( p < LittleLong(bmod->visdatasize) )
 					out->compressed_vis = mod->visdata + p;
 				else Con_Reportf( S_WARN "Mod_LoadLeafs: invalid visofs for leaf #%i\n", i );
 			}

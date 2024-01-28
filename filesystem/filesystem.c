@@ -1011,7 +1011,7 @@ static qboolean FS_ReadGameInfo( const char *filepath, const char *gamedir, game
 	char	*afile;
 
 	afile = (char *)FS_LoadFile( filepath, NULL, false );
-	Con_Printf("\nthe file %x\n\n", afile);
+	Con_Printf("\nthe file %s %x\n\n", filepath, afile);
 	if( !afile )
 		return false;
 
@@ -1962,7 +1962,6 @@ searchpath_t *FS_FindFile( const char *name, int *index, char *fixedname, size_t
 			continue;
 
 		pack_ind = search->pfnFindFile( search, name, fixedname, len );
-		Con_Printf("pfnfindfile %x, %s %i\n", search->type, name, pack_ind);
 		if( pack_ind >= 0 )
 		{
 			if( index )
@@ -2096,8 +2095,11 @@ file_t *FS_Open( const char *filepath, const char *mode, qboolean gamedironly )
 			return NULL;
 
 		FS_CreatePath( real_path ); // Create directories up to the file
-
-		return FS_SysOpen( real_path, mode );
+#if XASH_PS3
+		return FS_SysOpen( filepath, mode );
+#else
+		return FS_SysOpen(real_path, mode );
+#endif
 	}
 
 	// else, we look at the various search paths and open the file in read-only mode

@@ -115,6 +115,7 @@ ps3std_t stds =
 	strerror,
 	mkdir,
 	write,
+	strcpy,
 };
 #endif
 

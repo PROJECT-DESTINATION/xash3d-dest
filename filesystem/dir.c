@@ -271,7 +271,6 @@ static inline qboolean FS_AppendToPath( char *dst, size_t *pi, const size_t len,
 {
 	size_t i = *pi;
 	i += Q_strncpy( &dst[i], src, len - i );
-	Con_Printf("FS_AppendToPath: %s | Currently: %s\n", src, dst);
 	*pi = i;
 
 	if( i >= len )

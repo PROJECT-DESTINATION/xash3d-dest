@@ -772,7 +772,9 @@ qboolean Host_FilterTime( float time )
 
 	return true;
 }
-
+#if XASH_PS3
+#include <sys/tty.h>
+#endif
 /*
 =================
 Host_Frame
@@ -792,7 +794,7 @@ void Host_Frame( float time )
 	{
 		Con_DPrintf("Time to first frame: %.3f seconds\n", t1 - host.starttime);
 #if XASH_PS3
-		Cbuf_AddText("map bounce\n");
+		Cbuf_AddText("map bounce");
 #endif
 	}
 

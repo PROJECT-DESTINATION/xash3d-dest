@@ -508,6 +508,7 @@ void SV_InitClientMove( void )
 	svgame.pmove->PM_TraceLineEx = pfnTraceLineEx;
 	svgame.pmove->PM_TraceSurface = pfnTraceSurface;
 
+	Con_Printf("svgame.dllFuncs.pfnPM_Init %x\n", svgame.dllFuncs.pfnPM_Init);
 	// initalize pmove
 	svgame.dllFuncs.pfnPM_Init( svgame.pmove );
 }
