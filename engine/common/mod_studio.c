@@ -730,7 +730,7 @@ void Mod_StudioComputeBounds( void *buffer, vec3_t mins, vec3_t maxs, qboolean i
 
 		for( j = 0; j < pstudiohdr->numbones; j++ )
 		{
-			for( k = 0; k < pseqdesc->numframes; k++ )
+			for( k = 0; k < LittleLong(pseqdesc->numframes); k++ )
 			{
 				R_StudioCalcBonePosition( k, 0, &pbones[j], panim, NULL, pos );
 				Mod_StudioBoundVertex( vert_mins, vert_maxs, &bone_count, pos );

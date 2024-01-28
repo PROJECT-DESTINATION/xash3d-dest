@@ -489,7 +489,7 @@ uint MSG_ReadUBitLong( sizebuf_t *sb, int numbits )
 
 	// Read the current dword.
 	idword1 = sb->iCurBit >> 5;
-	dword1 = ((uint *)sb->pData)[idword1];
+	dword1 = LittleLong(((uint *)sb->pData)[idword1]);
 	dword1 >>= ( sb->iCurBit & 31 );	// get the bits we're interested in.
 
 	sb->iCurBit += numbits;

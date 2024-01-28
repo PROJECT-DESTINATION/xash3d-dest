@@ -32,6 +32,8 @@ static const struct in6_addr in6addr_any;
 #if XASH_PS3
 struct sockaddr_storage {
 	word ss_family;
+	word port;
+	byte ip[4];
 };
 #endif
 
@@ -320,7 +322,9 @@ NET_SockadrToNetAdr
 */
 static void NET_SockadrToNetadr( const struct sockaddr_storage *s, netadr_t *a )
 {
+#if !XASH_PS3
 	if( s->ss_family == AF_INET )
+#endif
 	{
 		a->type = NA_IP;
 		a->ip4 = ((struct sockaddr_in *)s)->sin_addr.s_addr;
@@ -969,7 +973,7 @@ qboolean NET_CompareAdr( const netadr_t a, const netadr_t b )
 		    return true;
 	}
 
-	Con_DPrintf( S_ERROR "NET_CompareAdr: bad address type\n" );
+	//Con_DPrintf( S_ERROR "NET_CompareAdr: bad address type %i\n", a.type);
 	return false;
 }
 
@@ -1471,8 +1475,11 @@ static qboolean NET_QueuePacket( netsrc_t sock, netadr_t *from, byte *data, size
 	struct sockaddr_storage	addr = { 0 };
 
 	*length = 0;
-
+#if !XASH_PS3
 	for( protocol = 0; protocol < 2; protocol++ )
+#else
+	for (protocol = 0; protocol < 1; protocol++)
+#endif
 	{
 		switch( protocol )
 		{
@@ -1485,11 +1492,12 @@ static qboolean NET_QueuePacket( netsrc_t sock, netadr_t *from, byte *data, size
 
 		addr_len = sizeof( addr );
 		ret = recvfrom( net_socket, buf, sizeof( buf ), 0, (struct sockaddr *)&addr, &addr_len );
-
 		NET_SockadrToNetadr( &addr, from );
+		
 
 		if( !NET_IsSocketError( ret ))
 		{
+			Con_Printf("addr: %x %i\n", ((struct sockaddr_in*)&addr)->sin_addr.s_addr, ((struct sockaddr_in*)&addr)->sin_port);
 			if( ret < NET_MAX_FRAGMENT )
 			{
 				// Transfer data
@@ -1523,12 +1531,14 @@ static qboolean NET_QueuePacket( netsrc_t sock, netadr_t *from, byte *data, size
 			case WSAEWOULDBLOCK:
 			case WSAECONNRESET:
 			case WSAECONNREFUSED:
+#else
+			case 0x80010014:
 #endif
 			case WSAEMSGSIZE:
 			case WSAETIMEDOUT:
 				break;
 			default:	// let's continue even after errors
-				Con_DPrintf( S_ERROR "NET_QueuePacket: %s from %s\n", NET_ErrorString(), NET_AdrToString( *from ));
+				Con_DPrintf( S_ERROR "NET_QueuePacket: %i %s from %s\n", err, NET_ErrorString(), NET_AdrToString( *from ));
 				break;
 			}
 		}
@@ -1733,7 +1743,7 @@ void NET_SendPacket( netsrc_t sock, size_t length, const void *data, netadr_t to
 #define PF_MAX          AF_MAX
 #endif
 
-#ifdef XASH_PS3
+#if XASH_PS3
 #define ioctlsocket( s, cmd, pVal ) setsockopt( s, SOL_SOCKET, cmd, pVal, sizeof( *( pVal ) ) )
 #define FIONBIO SO_NBIO
 struct timeval {
@@ -1755,10 +1765,17 @@ static int NET_IPSocket( const char *net_iface, int port, int family )
 	uint		optval = 1;
 	dword		_true = 1;
 	int pfamily = PF_INET;
+	Con_Printf("\n\n!!!!!!!!!!!!\n\nNET_IPSocket: %s %i %i\n\n!!!!!!!!!!!!\n\n", net_iface, port, family);
 #if !XASH_PS3
 	if( family == AF_INET6 )
 		pfamily = PF_INET6;
+#else
+	if (family == AF_INET6)
+	{
+		return INVALID_SOCKET;
+	}
 #endif // !XASH_PS3
+
 
 	if( NET_IsSocketError(( net_socket = socket( pfamily, SOCK_DGRAM, IPPROTO_UDP ))))
 	{
@@ -1769,7 +1786,7 @@ static int NET_IPSocket( const char *net_iface, int port, int family )
 #endif
 		return INVALID_SOCKET;
 	}
-
+#if !XASH_PS3
 	if( NET_IsSocketError( ioctlsocket( net_socket, FIONBIO, (void*)&_true )))
 	{
 		struct timeval timeout;
@@ -1779,7 +1796,8 @@ static int NET_IPSocket( const char *net_iface, int port, int family )
 		timeout.tv_sec = timeout.tv_usec = 0;
 		setsockopt( net_socket, SOL_SOCKET, SO_RCVTIMEO, (char *)&timeout, sizeof(timeout));
 	}
-
+#endif
+#if !XASH_PS3
 	// make it broadcast capable
 	if( NET_IsSocketError( setsockopt( net_socket, SOL_SOCKET, SO_BROADCAST, (char *)&_true, sizeof( _true ))))
 	{
@@ -1792,7 +1810,7 @@ static int NET_IPSocket( const char *net_iface, int port, int family )
 		closesocket( net_socket );
 		return INVALID_SOCKET;
 	}
-
+#endif
 	addr.ss_family = family;
 #if !XASH_PS3
 	if( family == AF_INET6 )
@@ -1858,12 +1876,17 @@ static int NET_IPSocket( const char *net_iface, int port, int family )
 		if( port == PORT_ANY ) ((struct sockaddr_in *)&addr)->sin_port = 0;
 		else ((struct sockaddr_in *)&addr)->sin_port = htons((short)port);
 
+		Con_Printf("addr: %x\n", ((struct sockaddr_in*)&addr)->sin_addr.s_addr);
+
 		if( NET_IsSocketError( bind( net_socket, (struct sockaddr *)&addr, sizeof( struct sockaddr_in ))))
 		{
 			Con_DPrintf( S_WARN "NET_UDPSocket: port: %d bind: %s\n", port, NET_ErrorString( ));
 			closesocket( net_socket );
 			return INVALID_SOCKET;
 		}
+#if XASH_PS3
+		ioctlsocket(net_socket, FIONBIO, (unsigned long*)&_true);
+#endif
 	}
 
 	return net_socket;
@@ -2215,7 +2238,11 @@ void NET_Init( void )
 #endif
 
 	net.allow_ip = !Sys_CheckParm( "-noip" );
+#if XASH_PS3
 	net.allow_ip6 = !Sys_CheckParm( "-noip6" );
+#else
+	net.allow_ip6 = false;
+#endif
 
 	// specify custom host port
 	if( Sys_GetParmFromCmdLine( "-port", cmd ) && Q_isdigit( cmd ))

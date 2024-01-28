@@ -101,6 +101,8 @@ static void print_escaped(const char* s)
 	}
 }
 
+
+
 struct vdf_object* vdf_parse_buffer(const char* buffer, size_t size)
 {
 	int bleh;

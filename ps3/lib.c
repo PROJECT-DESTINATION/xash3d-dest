@@ -1,6 +1,5 @@
 #include "ps3lib.h"
 
-
 extern ps3std_t* stds;
 
 char curdir[260];

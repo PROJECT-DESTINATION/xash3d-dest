@@ -2269,7 +2269,7 @@ void CL_ReadNetMessage( void )
 			if( !NetSplit_GetLong( &cls.netchan.netsplit, &net_from, net_message_buffer, &curSize ) )
 				continue;
 		}
-
+		Con_Printf("message: %x\n", net_from.type);
 		MSG_Init( &net_message, "ServerData", net_message_buffer, curSize );
 
 		// check for connectionless packet (0xffffffff) first

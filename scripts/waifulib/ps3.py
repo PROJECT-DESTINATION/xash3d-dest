@@ -35,10 +35,10 @@ class mkfself(Task.Task):
 
 
 class cprogram_ps3(c.cprogram):
-	run_str = '${LINK_SNC} ${LINKFLAGS} -oformat=fself ${LIBPATH_ST:LIBPATH} ${LIB_ST:LIB} ${LIBPATH_ST:STLIBPATH} ${LIB_ST:STLIB} --start-group libc.a ${CCLNK_SRC_F}${SRC} ${LIB} --end-group ${SNCLNK_TGT_F} ${TGT[0].abspath()}'
+	run_str = '${LINK_SNC} ${LINKFLAGS} -oformat=fself ${LIBPATH_ST:LIBPATH} ${LIB_ST:LIB} ${LIBPATH_ST:STLIBPATH} ${LIB_ST:STLIB} --start-group liblv2_stub.a libpsutil.a libsyscall.a libc.a ${CCLNK_SRC_F}${SRC} ${LIB} --end-group ${SNCLNK_TGT_F} ${TGT[0].abspath()}'
 
 class cxxprogram_ps3(cxx.cxxprogram):
-	run_str = '${LINK_SNC} ${LINKFLAGS} -oformat=fself ${LIBPATH_ST:LIBPATH} ${LIB_ST:LIB} ${LIBPATH_ST:STLIBPATH} ${LIB_ST:STLIB} --start-group libc.a ${CXXLNK_SRC_F}${SRC} ${LIB} --end-group ${SNCLNK_TGT_F} ${TGT[0].abspath()}'
+	run_str = '${LINK_SNC} ${LINKFLAGS} -oformat=fself ${LIBPATH_ST:LIBPATH} ${LIB_ST:LIB} ${LIBPATH_ST:STLIBPATH} ${LIB_ST:STLIB} --start-group liblv2_stub.a libpsutil.a libsyscall.a libc.a ${CXXLNK_SRC_F}${SRC} ${LIB} --end-group ${SNCLNK_TGT_F} ${TGT[0].abspath()}'
 
 class cxx_ps3(cxx.cxx):
 	run_str = '${SNC} ${ARCH_ST:ARCH} -D__PS3__ ${CXXFLAGS} ${FRAMEWORKPATH_ST:FRAMEWORKPATH} -I"." ${SNCPATH_ST:INCPATHS} ${DEFINES_ST:DEFINES} ${SNC_SRC_F}${SRC} ${SNC_TGT_F}${TGT[0].abspath()} ${CPPFLAGS}'
