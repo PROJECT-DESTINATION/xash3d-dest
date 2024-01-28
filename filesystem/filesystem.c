@@ -417,7 +417,6 @@ void FS_AddGameDirectory( const char *dir, uint flags )
 	{
 		if( archive->type == SEARCHPATH_WAD ) // HACKHACK: wads need direct paths but only in this function
 			FS_AllowDirectPaths( true );
-		Con_Printf("\n\nArchvie ext: %s\n\n", archive->ext);
 		for( i = 0; i < list.numstrings; i++ )
 		{
 			ext = COM_FileExtension( list.strings[i] );
@@ -1779,7 +1778,6 @@ file_t *FS_SysOpen( const char *filepath, const char *mode )
 
 
 	file->real_length = lseek( file->handle, 0, SEEK_END );
-	Con_Printf("lengggggg %i\n", file->real_length);
 	// uncomment do disable write
 	//if( opt & O_CREAT )
 	//	return NULL;
@@ -1952,7 +1950,6 @@ and the file index in the package if relevant
 searchpath_t *FS_FindFile( const char *name, int *index, char *fixedname, size_t len, qboolean gamedironly )
 {
 	searchpath_t	*search;
-	Con_Printf("WHAT %x\n", fs_searchpaths);
 	// search through the path, one element at a time
 	for( search = fs_searchpaths; search; search = search->next )
 	{
@@ -2514,15 +2511,12 @@ byte *FS_LoadFile( const char *path, fs_offset_t *filesizeptr, qboolean gamediro
 
 	if( path[0] == '/' || path[0] == '\\' )
 		path++;
-	Con_Printf("k %i\n", __LINE__);
 	if( !fs_searchpaths || FS_CheckNastyPath( path ))
 		return NULL;
 
 	search = FS_FindFile( path, &pack_ind, netpath, sizeof( netpath ), gamedironly );
-	Con_Printf("k %i\n",__LINE__);
 	if( !search )
 		return NULL;
-	Con_Printf("k %i\n", __LINE__);
 	// custom load file function for compressed files
 	if( search->pfnLoadFile )
 		return search->pfnLoadFile( search, netpath, pack_ind, filesizeptr );
@@ -2541,10 +2535,8 @@ byte *FS_LoadFile( const char *path, fs_offset_t *filesizeptr, qboolean gamediro
 
 		if( filesizeptr )
 			*filesizeptr = filesize;
-		Con_Printf("k %i\n", __LINE__);
 		return buf;
 	}
-	Con_Printf("k %i\n", __LINE__);
 	return NULL;
 }
 

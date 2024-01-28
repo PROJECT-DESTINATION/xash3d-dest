@@ -702,7 +702,7 @@ void Mod_StudioComputeBounds( void *buffer, vec3_t mins, vec3_t maxs, qboolean i
 	// each body part has nummodels variations so there are as many total variations as there
 	// are in a matrix of each part by each other part
 	for( i = 0; i < pstudiohdr->numbodyparts; i++ )
-		bodyCount += pbodypart[i].nummodels;
+		bodyCount += LittleLong(pbodypart[i].nummodels);
 
 	// The studio models we want are vec3_t mins, vec3_t maxsight after the bodyparts (still need to
 	// find a detailed breakdown of the mdl format).  Move pointer there.
@@ -710,9 +710,9 @@ void Mod_StudioComputeBounds( void *buffer, vec3_t mins, vec3_t maxs, qboolean i
 
 	for( i = 0; i < bodyCount; i++ )
 	{
-		pverts = (vec3_t *)((byte *)pstudiohdr + m_pSubModel[i].vertindex);
+		pverts = (vec3_t *)((byte *)pstudiohdr + LittleLong(m_pSubModel[i].vertindex));
 
-		for( j = 0; j < m_pSubModel[i].numverts; j++ )
+		for( j = 0; j < LittleLong(m_pSubModel[i].numverts); j++ )
 			Mod_StudioBoundVertex( bone_mins, bone_maxs, &vert_count, pverts[j] );
 	}
 
@@ -722,10 +722,10 @@ void Mod_StudioComputeBounds( void *buffer, vec3_t mins, vec3_t maxs, qboolean i
 	for( i = 0; i < numseq; i++ )
 	{
 		pseqdesc = (mstudioseqdesc_t *)((byte *)pstudiohdr + pstudiohdr->seqindex) + i;
-		pseqgroup = (mstudioseqgroup_t *)((byte *)pstudiohdr + pstudiohdr->seqgroupindex) + pseqdesc->seqgroup;
+		pseqgroup = (mstudioseqgroup_t *)((byte *)pstudiohdr + pstudiohdr->seqgroupindex) + LittleLong(pseqdesc->seqgroup);
 
 		if( pseqdesc->seqgroup == 0 )
-			panim = (mstudioanim_t *)((byte *)pstudiohdr + pseqdesc->animindex);
+			panim = (mstudioanim_t *)((byte *)pstudiohdr + LittleLong(pseqdesc->animindex));
 		else continue;
 
 		for( j = 0; j < pstudiohdr->numbones; j++ )
@@ -760,7 +760,7 @@ qboolean Mod_GetStudioBounds( const char *name, vec3_t mins, vec3_t maxs )
 	f = FS_LoadFile( name, NULL, false );
 	if( !f ) return false;
 
-	if( *(uint *)f == IDSTUDIOHEADER )
+	if( LittleLong(*(uint *)f) == IDSTUDIOHEADER )
 	{
 		VectorClear( mins );
 		VectorClear( maxs );
@@ -831,7 +831,7 @@ static studiohdr_t *R_StudioLoadHeader( model_t *mod, const void *buffer )
 
 	pin = (byte *)buffer;
 	phdr = (studiohdr_t *)pin;
-	i = phdr->version;
+	i = LittleLong(phdr->version);
 
 	if( i != STUDIO_VERSION && i != STUDIO_VERSION2)
 	{
@@ -949,6 +949,39 @@ void Mod_LoadStudioModel( model_t *mod, const void *buffer, qboolean *loaded, co
 	mod->type = mod_studio;
 
 	phdr = R_StudioLoadHeader( mod, buffer );
+	LittleVectorSW(phdr->bbmax);
+	LittleVectorSW(phdr->bbmin);
+	LittleVectorSW(phdr->eyeposition);
+	LittleVectorSW(phdr->max);
+	LittleVectorSW(phdr->min);
+	LittleLongSW(phdr->attachmentindex);
+	LittleLongSW(phdr->bodypartindex);
+	LittleLongSW(phdr->bonecontrollerindex);
+	LittleLongSW(phdr->boneindex);
+	LittleLongSW(phdr->flags);
+	LittleLongSW(phdr->hitboxindex);
+	LittleLongSW(phdr->ident);
+	LittleLongSW(phdr->length);
+	LittleLongSW(phdr->numattachments);
+	LittleLongSW(phdr->numbodyparts);
+	LittleLongSW(phdr->numbonecontrollers);
+	LittleLongSW(phdr->numbones);
+	LittleLongSW(phdr->numhitboxes);
+	LittleLongSW(phdr->numseq);
+	LittleLongSW(phdr->numseqgroups);
+	LittleLongSW(phdr->numskinfamilies);
+	LittleLongSW(phdr->numskinref);
+	LittleLongSW(phdr->numtextures);
+	LittleLongSW(phdr->numtransitions);
+	LittleLongSW(phdr->seqgroupindex);
+	LittleLongSW(phdr->seqindex);
+	LittleLongSW(phdr->skinindex);
+	LittleLongSW(phdr->studiohdr2index);
+	LittleLongSW(phdr->texturedataindex);
+	LittleLongSW(phdr->textureindex);
+	LittleLongSW(phdr->transitionindex);
+	LittleLongSW(phdr->version);
+
 	if( !phdr ) return;	// bad model
 
 	if( !Host_IsDedicated() )

@@ -382,7 +382,6 @@ static int FS_FindFile_DIR( searchpath_t *search, const char *path, char *fixedn
 
 	if( !FS_FixFileCase( search->dir, path, netpath, sizeof( netpath ), false ))
 		return -1;
-	Con_Printf("FS_FindFile_DIR %i\n", __LINE__);
 	if( FS_SysFileExists( netpath ))
 	{
 		// return fixed case file name only local for that searchpath

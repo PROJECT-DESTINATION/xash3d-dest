@@ -159,9 +159,11 @@ _inline float LittleFloat( float f )
 
 	return dat2.f;
 }
+#define LittleVectorSW(x) x[0] = LittleFloat(x[0]);x[1] = LittleFloat(x[1]);x[2] = LittleFloat(x[2])
 #else
 #define LittleLong(x) (x)
 #define LittleLongSW(x)
+#define LittleVectorSW(x)
 #define LittleShort(x) (x)
 #define LittleShortSW(x)
 #define LittleFloat(x) (x)
