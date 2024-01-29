@@ -702,7 +702,7 @@ void Mod_StudioComputeBounds( void *buffer, vec3_t mins, vec3_t maxs, qboolean i
 	// each body part has nummodels variations so there are as many total variations as there
 	// are in a matrix of each part by each other part
 	for( i = 0; i < pstudiohdr->numbodyparts; i++ )
-		bodyCount += LittleLong(pbodypart[i].nummodels);
+		bodyCount += pbodypart[i].nummodels;
 
 	// The studio models we want are vec3_t mins, vec3_t maxsight after the bodyparts (still need to
 	// find a detailed breakdown of the mdl format).  Move pointer there.
@@ -710,9 +710,9 @@ void Mod_StudioComputeBounds( void *buffer, vec3_t mins, vec3_t maxs, qboolean i
 
 	for( i = 0; i < bodyCount; i++ )
 	{
-		pverts = (vec3_t *)((byte *)pstudiohdr + LittleLong(m_pSubModel[i].vertindex));
+		pverts = (vec3_t *)((byte *)pstudiohdr + m_pSubModel[i].vertindex);
 
-		for( j = 0; j < LittleLong(m_pSubModel[i].numverts); j++ )
+		for( j = 0; j < m_pSubModel[i].numverts; j++ )
 			Mod_StudioBoundVertex( bone_mins, bone_maxs, &vert_count, pverts[j] );
 	}
 
@@ -722,15 +722,15 @@ void Mod_StudioComputeBounds( void *buffer, vec3_t mins, vec3_t maxs, qboolean i
 	for( i = 0; i < numseq; i++ )
 	{
 		pseqdesc = (mstudioseqdesc_t *)((byte *)pstudiohdr + pstudiohdr->seqindex) + i;
-		pseqgroup = (mstudioseqgroup_t *)((byte *)pstudiohdr + pstudiohdr->seqgroupindex) + LittleLong(pseqdesc->seqgroup);
+		pseqgroup = (mstudioseqgroup_t *)((byte *)pstudiohdr + pstudiohdr->seqgroupindex) + pseqdesc->seqgroup;
 
 		if( pseqdesc->seqgroup == 0 )
-			panim = (mstudioanim_t *)((byte *)pstudiohdr + LittleLong(pseqdesc->animindex));
+			panim = (mstudioanim_t *)((byte *)pstudiohdr + pseqdesc->animindex);
 		else continue;
 
 		for( j = 0; j < pstudiohdr->numbones; j++ )
 		{
-			for( k = 0; k < LittleLong(pseqdesc->numframes); k++ )
+			for( k = 0; k < pseqdesc->numframes; k++ )
 			{
 				R_StudioCalcBonePosition( k, 0, &pbones[j], panim, NULL, pos );
 				Mod_StudioBoundVertex( vert_mins, vert_maxs, &bone_count, pos );
@@ -949,6 +949,9 @@ void Mod_LoadStudioModel( model_t *mod, const void *buffer, qboolean *loaded, co
 	mod->type = mod_studio;
 
 	phdr = R_StudioLoadHeader( mod, buffer );
+
+	if( !phdr ) return;	// bad model
+
 	LittleVectorSW(phdr->bbmax);
 	LittleVectorSW(phdr->bbmin);
 	LittleVectorSW(phdr->eyeposition);
@@ -982,7 +985,106 @@ void Mod_LoadStudioModel( model_t *mod, const void *buffer, qboolean *loaded, co
 	LittleLongSW(phdr->transitionindex);
 	LittleLongSW(phdr->version);
 
-	if( !phdr ) return;	// bad model
+	for (int i = 0; i < phdr->numbones; i++)
+	{
+		mstudiobone_t* bone = &(((mstudiobone_t*)((byte*)phdr + phdr->boneindex))[i]);
+		LittleLongSW(bone->bonecontroller[0]);
+		LittleLongSW(bone->bonecontroller[1]);
+		LittleLongSW(bone->bonecontroller[2]);
+		LittleLongSW(bone->bonecontroller[3]);
+		LittleLongSW(bone->bonecontroller[4]);
+		LittleLongSW(bone->bonecontroller[5]);
+		LittleLongSW(bone->parent);
+		LittleFloatSW(bone->scale[0]);
+		LittleFloatSW(bone->scale[1]);
+		LittleFloatSW(bone->scale[2]);
+		LittleFloatSW(bone->scale[3]);
+		LittleFloatSW(bone->scale[4]);
+		LittleFloatSW(bone->scale[5]);
+		LittleFloatSW(bone->value[0]);
+		LittleFloatSW(bone->value[1]);
+		LittleFloatSW(bone->value[2]);
+		LittleFloatSW(bone->value[3]);
+		LittleFloatSW(bone->value[4]);
+		LittleFloatSW(bone->value[5]);
+	}
+
+	for (int i = 0; i < phdr->numhitboxes; i++)
+	{
+		mstudiobbox_t* hitbox = &(((mstudiobbox_t*)((byte*)phdr + phdr->hitboxindex))[i]);
+		LittleLongSW(hitbox->bone);
+		LittleLongSW(hitbox->group);
+		LittleVectorSW(hitbox->bbmin);
+		LittleVectorSW(hitbox->bbmax);
+	}
+
+	for (int i = 0; i < phdr->numbonecontrollers; i++)
+	{
+		mstudiobonecontroller_t* bonecontroller = &(((mstudiobonecontroller_t*)((byte*)phdr + phdr->bonecontrollerindex))[i]);
+		LittleLongSW(bonecontroller->bone);
+		LittleFloatSW(bonecontroller->end);
+		LittleFloatSW(bonecontroller->start);
+		LittleLongSW(bonecontroller->type);
+	}
+
+	for (int i = 0; i < phdr->numseq; i++)
+	{
+		mstudioseqdesc_t* seq = &(((mstudioseqdesc_t*)((byte*)phdr + phdr->seqindex))[i]);
+		LittleFloatSW(seq->fps);
+		LittleLongSW(seq->flags);
+		LittleLongSW(seq->activity);
+		LittleLongSW(seq->actweight);
+		LittleLongSW(seq->numevents);
+		LittleLongSW(seq->eventindex);
+		LittleLongSW(seq->numframes);
+		LittleLongSW(seq->weightlistindex);
+		LittleLongSW(seq->iklockindex);
+		LittleLongSW(seq->motiontype);
+		LittleLongSW(seq->motionbone);
+		LittleVectorSW(seq->linearmovement);
+		LittleLongSW(seq->autolayerindex);
+		LittleLongSW(seq->keyvalueindex);
+		LittleVectorSW(seq->bbmin);
+		LittleVectorSW(seq->bbmax);
+		LittleLongSW(seq->numblends);
+		LittleLongSW(seq->animindex);
+		LittleLongSW(seq->blendtype[0]);
+		LittleLongSW(seq->blendtype[1]);
+		LittleFloatSW(seq->blendstart[0]);
+		LittleFloatSW(seq->blendstart[1]);
+		LittleFloatSW(seq->blendend[0]);
+		LittleFloatSW(seq->blendend[1]);
+		LittleLongSW(seq->seqgroup);
+		LittleLongSW(seq->entrynode);
+		LittleLongSW(seq->exitnode);
+		LittleLongSW(seq->animdescindex);
+	}
+
+	dword nummodels = 0;
+
+	for (int i = 0; i < phdr->numbodyparts; i++)
+	{
+		mstudiobodyparts_t* bodypart = &(((mstudiobodyparts_t*)((byte*)phdr + phdr->bodypartindex))[i]);
+		LittleLongSW(bodypart->base);
+		LittleLongSW(bodypart->modelindex);
+		LittleLongSW(bodypart->nummodels);
+		nummodels += bodypart->nummodels;
+	}
+
+	for (int i = 0; i < nummodels; i++)
+	{
+		mstudiomodel_t* model = &(((mstudiomodel_t*)&(((mstudiobodyparts_t*)((byte*)phdr + phdr->bodypartindex))[phdr->numbodyparts]))[i]);
+		LittleLongSW(model->blendnorminfoindex);
+		LittleLongSW(model->blendvertinfoindex);
+		LittleLongSW(model->meshindex);
+		LittleLongSW(model->normindex);
+		LittleLongSW(model->norminfoindex);
+		LittleLongSW(model->nummesh);
+		LittleLongSW(model->numnorms);
+		LittleLongSW(model->numverts);
+		LittleLongSW(model->vertindex);
+		LittleLongSW(model->vertinfoindex);
+	}
 
 	if( !Host_IsDedicated() )
 	{

@@ -262,13 +262,21 @@ void MSG_WriteSBitLong( sizebuf_t *sb, int data, int numbits )
 	// (Some old code writes direct integers right into the buffer).
 	if( data < 0 )
 	{
+#if XASH_BIG_ENDIAN
+		MSG_WriteUBitLong(sb, (uint)data, numbits);
+#else
 		MSG_WriteUBitLong( sb, (uint)( 0x80000000 + data ), numbits - 1 );
 		MSG_WriteOneBit( sb, 1 );
+#endif
 	}
 	else
 	{
+#if XASH_BIG_ENDIAN
+		MSG_WriteUBitLong(sb, (uint)data, numbits);
+#else
 		MSG_WriteUBitLong( sb, (uint)data, numbits - 1 );
 		MSG_WriteOneBit( sb, 0 );
+#endif
 	}
 }
 
