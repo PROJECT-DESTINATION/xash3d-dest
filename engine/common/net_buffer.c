@@ -222,12 +222,17 @@ void MSG_WriteUBitLong( sizebuf_t *sb, uint curData, int numbits )
 		uint	iDWord = iCurBit >> 5;	// Mask in a dword.
 		uint32_t	iCurBitMasked;
 		int	nBitsWritten;
-
+		dword data;
 		Assert(( iDWord * 4 + sizeof( int )) <= (uint)MSG_GetMaxBytes( sb ));
 
 		iCurBitMasked = iCurBit & 31;
-		((uint32_t *)sb->pData)[iDWord] &= BitWriteMasks[iCurBitMasked][nBitsLeft];
-		((uint32_t *)sb->pData)[iDWord] |= curData << iCurBitMasked;
+
+		data = LittleLong(((uint32_t*)sb->pData)[iDWord]);
+
+		data &= BitWriteMasks[iCurBitMasked][nBitsLeft];
+		data |= curData << iCurBitMasked;
+
+		((uint32_t*)sb->pData)[iDWord] = LittleLong(data);
 
 		// did it span a dword?
 		nBitsWritten = 32 - iCurBitMasked;
@@ -239,8 +244,13 @@ void MSG_WriteUBitLong( sizebuf_t *sb, uint curData, int numbits )
 			curData >>= nBitsWritten;
 
 			iCurBitMasked = iCurBit & 31;
-			((uint32_t *)sb->pData)[iDWord+1] &= BitWriteMasks[iCurBitMasked][nBitsLeft];
-			((uint32_t *)sb->pData)[iDWord+1] |= curData << iCurBitMasked;
+
+			data = LittleLong(((uint32_t*)sb->pData)[iDWord + 1]);
+
+			data &= BitWriteMasks[iCurBitMasked][nBitsLeft];
+			data |= curData << iCurBitMasked;
+
+			((uint32_t*)sb->pData)[iDWord + 1] = LittleLong(data);
 		}
 		sb->iCurBit += numbits;
 	}
@@ -257,7 +267,7 @@ void MSG_WriteSBitLong( sizebuf_t *sb, int data, int numbits )
 {
 	// do we have a valid # of bits to encode with?
 	Assert( numbits >= 1 && numbits <= 32 );
-
+	//LittleLongSW(data);
 	// NOTE: it does this wierdness here so it's bit-compatible with regular integer data in the buffer.
 	// (Some old code writes direct integers right into the buffer).
 	if( data < 0 )
@@ -291,7 +301,7 @@ qboolean MSG_WriteBits( sizebuf_t *sb, const void *pData, int nBits )
 {
 	byte	*pOut = (byte *)pData;
 	int	nBitsLeft = nBits;
-
+#ifndef XASH_BIG_ENDIAN
 	// get output dword-aligned.
 	while((( uint32_t )pOut & 3 ) != 0 && nBitsLeft >= 8 )
 	{
@@ -309,7 +319,7 @@ qboolean MSG_WriteBits( sizebuf_t *sb, const void *pData, int nBits )
 		pOut += sizeof( uint32_t );
 		nBitsLeft -= 32;
 	}
-
+#endif
 	// read the remaining bytes.
 	while( nBitsLeft >= 8 )
 	{
@@ -512,7 +522,7 @@ uint MSG_ReadUBitLong( sizebuf_t *sb, int numbits )
 	else
 	{
 		int	nExtraBits = sb->iCurBit & 31;
-		uint	dword2 = ((uint *)sb->pData)[idword1+1] & ExtraMasks[nExtraBits];
+		uint	dword2 = LittleLong(((uint *)sb->pData)[idword1+1]) & ExtraMasks[nExtraBits];
 
 		// no need to mask since we hit the end of the dword.
 		// shift the second dword's part into the high bits.
@@ -525,7 +535,7 @@ qboolean MSG_ReadBits( sizebuf_t *sb, void *pOutData, int nBits )
 {
 	byte	*pOut = (byte *)pOutData;
 	int	nBitsLeft = nBits;
-
+#ifndef XASH_BIG_ENDIAN
 	// get output dword-aligned.
 	while((( uint32_t )pOut & 3) != 0 && nBitsLeft >= 8 )
 	{
@@ -541,7 +551,7 @@ qboolean MSG_ReadBits( sizebuf_t *sb, void *pOutData, int nBits )
 		pOut += sizeof( uint32_t );
 		nBitsLeft -= 32;
 	}
-
+#endif
 	// read the remaining bytes.
 	while( nBitsLeft >= 8 )
 	{

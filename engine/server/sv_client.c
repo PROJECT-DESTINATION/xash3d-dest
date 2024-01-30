@@ -3133,7 +3133,7 @@ void SV_ConnectionlessPacket( netadr_t from, sizebuf_t *msg )
 	Cmd_TokenizeString( args );
 
 	pcmd = Cmd_Argv( 0 );
-	Con_Printf("SV_ConnectionlessPacket: %i\n", from.type);
+	Con_Printf("SV_ConnectionlessPacket: %s\n", pcmd);
 	if( sv_log_outofband.value )
 		Con_Reportf( "SV_ConnectionlessPacket: %s : %s\n", NET_AdrToString( from ), pcmd );
 

@@ -181,7 +181,12 @@ char *va( const char *format, ... )
 
 ===============================================================================
 */
+
+#if XASH_BIG_ENDIAN
+#define LZSS_ID		(('L'<<24)|('Z'<<16)|('S'<<8)|('S'))
+#else
 #define LZSS_ID		(('S'<<24)|('S'<<16)|('Z'<<8)|('L'))
+#endif
 #define LZSS_LOOKSHIFT	4
 #define LZSS_WINDOW_SIZE	4096
 #define LZSS_LOOKAHEAD	BIT( LZSS_LOOKSHIFT )
@@ -219,7 +224,7 @@ qboolean LZSS_IsCompressed( const byte *source )
 {
 	lzss_header_t	*phdr = (lzss_header_t *)source;
 
-	if( phdr && phdr->id == LZSS_ID )
+	if( phdr && LittleLong(phdr->id) == LZSS_ID )
 		return true;
 	return false;
 }
@@ -283,7 +288,7 @@ static byte *LZSS_CompressNoAlloc( lzss_state_t *state, byte *pInput, int input_
 
 	// set LZSS header
 	header->id = LZSS_ID;
-	header->size = input_length;
+	header->size = LittleLong(input_length);
 
 	// create the compression work buffers, small enough (~64K) for stack
 	state->hash_table = (lzss_list_t *)alloca( 256 * sizeof( lzss_list_t ));
