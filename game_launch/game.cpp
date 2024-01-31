@@ -175,9 +175,9 @@ _inline int Sys_Start( void )
 
 	if( Xash_Shutdown )
 		changeGame = Sys_ChangeGame;
-
+	
 	ret = Xash_Main( szArgc, szArgv, szGameDir, 0, changeGame );
-
+	
 	Sys_UnloadEngine();
 
 	return ret;

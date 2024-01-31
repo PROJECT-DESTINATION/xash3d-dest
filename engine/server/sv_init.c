@@ -810,7 +810,7 @@ qboolean CRC32_MapFile( dword *crcvalue, const char *filename, qboolean multipla
 	int	version, hdr_size;
 	dheader_t	*header;
 	file_t	*f;
-
+	Con_Printf("CRC32_MapFile\n");
 	if( !crcvalue ) return false;
 
 	// always calc same checksum for singleplayer
@@ -834,11 +834,12 @@ qboolean CRC32_MapFile( dword *crcvalue, const char *filename, qboolean multipla
 	if( num_bytes != hdr_size )
 	{
 		FS_Close( f );
+		Con_Printf("Bad size %i != %i\n", num_bytes, hdr_size);
 		return false;
 	}
 
 	header = (dheader_t *)headbuf;
-
+	LittleLongSW(header->version);
 	// invalid version ?
 	switch( header->version )
 	{
@@ -848,10 +849,16 @@ qboolean CRC32_MapFile( dword *crcvalue, const char *filename, qboolean multipla
 		break;
 	default:
 		FS_Close( f );
+		Con_Printf("bad version %x\n", LittleLong(header->version));
 		return false;
 	}
 
 	CRC32_Init( crcvalue );
+
+	for (int i = 0; i < sizeof(dheader_t) / 4; i++)
+	{
+		LittleLongSW(((int*)header)[i]);
+	}
 
 	for( i = LUMP_PLANES; i < HEADER_LUMPS; i++ )
 	{
@@ -876,7 +883,7 @@ qboolean CRC32_MapFile( dword *crcvalue, const char *filename, qboolean multipla
 	}
 
 	FS_Close( f );
-
+	Con_Printf("CRC: %x\n", *crcvalue);
 	return 1;
 }
 

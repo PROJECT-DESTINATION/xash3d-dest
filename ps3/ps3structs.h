@@ -39,6 +39,7 @@ typedef struct
 	int (*mkdir)(const char* dir, mode_t mode);
 	int (*write)(int filedes, const void* buf, unsigned int nbyte);
 	char* (*strcpy)(char *s1, const char* s2);
+	float (*_FSin)(float v, unsigned int l);
 	
 } ps3std_t;
 

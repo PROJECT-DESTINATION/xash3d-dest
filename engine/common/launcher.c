@@ -82,6 +82,7 @@ static int Sys_Start( void )
 #include <dirent.h>
 #include <stdio.h>
 #include <fcntl.h>
+#include <math.h>
 ps3std_t stds =
 {
 	malloc,
@@ -116,6 +117,7 @@ ps3std_t stds =
 	mkdir,
 	write,
 	strcpy,
+	_FSin,
 };
 #endif
 

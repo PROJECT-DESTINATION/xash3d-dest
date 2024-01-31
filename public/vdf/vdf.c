@@ -105,8 +105,6 @@ static void print_escaped(const char* s)
 
 struct vdf_object* vdf_parse_buffer(const char* buffer, size_t size)
 {
-	int bleh;
-	sys_tty_write(0, "BAH\n", 4, &bleh);
 	if (!buffer)
 		return NULL;
 
@@ -124,12 +122,8 @@ struct vdf_object* vdf_parse_buffer(const char* buffer, size_t size)
 	const char* end = buffer + size;
 
 	const char* buf = NULL;
-	char why[2];
-	why[1] = '\n';
 	while (end > tail)
 	{
-		why[0] = *tail;
-		sys_tty_write(0, why, 2, &bleh);
 		switch (*tail)
 		{
 			case CHAR_NEWLINE:
@@ -158,26 +152,20 @@ struct vdf_object* vdf_parse_buffer(const char* buffer, size_t size)
 			case CHAR_DOUBLE_QUOTE:
 				if (tail > buffer && *(tail-1) == CHAR_BACKSLASH)
 					break;
-				sys_tty_write(0, "BIH\n", 4, &bleh);
 				if (!buf)
 				{
-					sys_tty_write(0, "BOH\n", 4, &bleh);
  					if ((isdigit((char)(*tail)) || *tail == '.'))
 					{
-						sys_tty_write(0, "BMH\n", 4, &bleh);
 						buf = tail;
 					}
 					else
 					{
-						sys_tty_write(0, "BNH\n", 4, &bleh);
 						buf = tail + 1;
 					}
-					sys_tty_write(0, "BAH\n", 4, &bleh);
 				}
 				else if (o->key)
 				{
 				EndOfValue:
-					sys_tty_write(0, "BLH\n", 4, &bleh);
 					size_t len = tail - buf;
 					size_t digits = 0;
 					size_t chars = 0;
@@ -259,7 +247,6 @@ struct vdf_object* vdf_parse_buffer(const char* buffer, size_t size)
 					o->key = local_strndup_escape(buf, len);
 					buf = NULL;
 				}
-				sys_tty_write(0, "BEH\n", 4, &bleh);
 				break;
 
 			case CHAR_OPEN_CURLY_BRACKET:
@@ -283,13 +270,11 @@ struct vdf_object* vdf_parse_buffer(const char* buffer, size_t size)
 
 			case CHAR_CLOSED_CURLY_BRACKET:
 				//assert(!buf);
-				sys_tty_write(0, "AAA\n", 4, &bleh);
 
 				o = o->parent;
 				//assert(o);
 				if (o->parent)
 				{
-					sys_tty_write(0, "BBB\n", 4, &bleh);
 					o = o->parent;
 					//assert(o->type == VDF_TYPE_ARRAY);
 
@@ -305,7 +290,6 @@ struct vdf_object* vdf_parse_buffer(const char* buffer, size_t size)
 				else
 				{
 					root_object->type = VDF_TYPE_ARRAY;
-					sys_tty_write(0, "CCC\n", 4, &bleh);
 
 					return root_object;
 				}
