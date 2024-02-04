@@ -838,7 +838,7 @@ void R_DrawEntitiesOnList( void )
 			R_DrawStudioModel2(RI.currententity);
 			break;
 		case mod_brush2:
-			R_DrawBrushModel(RI.currententity);
+			R_DrawBrushModel2(RI.currententity);
 			break;
 		default:
 			break;

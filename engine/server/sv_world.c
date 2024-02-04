@@ -192,7 +192,7 @@ static hull_t *SV_HullForBsp( edict_t *ent, const vec3_t mins, const vec3_t maxs
 	// decide which clipping hull to use, based on the size
 	model = SV_ModelHandle( ent->v.modelindex );
 
-	if( !model || model->type != mod_brush )
+	if( !model || (model->type != mod_brush && model->type != mod_brush2) )
 		Host_Error( "Entity %i (%s) SOLID_BSP with a non bsp model %s\n", NUM_FOR_EDICT( ent ), SV_ClassName( ent ), STRING( ent->v.model ));
 
 	VectorSubtract( maxs, mins, size );
@@ -579,6 +579,7 @@ static void SV_FindTouchedLeafs( edict_t *ent, mnode_t *node, int *headnode )
 	if(( sides == 3 ) && ( *headnode == -1 ))
 		*headnode = node - sv.worldmodel->nodes;
 
+	Con_Printf("%x | %x %x\n", node, node->children[0], node->children[1]);
 	// recurse down the contacted sides
 	if( sides & 1 ) SV_FindTouchedLeafs( ent, node->children[0], headnode );
 	if( sides & 2 ) SV_FindTouchedLeafs( ent, node->children[1], headnode );

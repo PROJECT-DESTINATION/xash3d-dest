@@ -3329,59 +3329,63 @@ static int Mod_LumpLooksLikeEntities( const char *lump, const size_t lumplen )
 
 /*
 =================
-Mod_LoadBmodel2Lumps
+Mod_LoadBmodelVBSPLumps
 
 loading and processing bmodel, but the new engine
 =================
 */
-static qboolean Mod_LoadBmodel2Lumps(model_t* mod, const byte* mod_base, qboolean isworld)
+static qboolean Mod_LoadBmodelVBSPLumps(model_t *mod, const byte *mod_base, qboolean isworld)
 {
-	const dheader2_t* header = (const dheader2_t*)mod_base;
-	dbspmodel_t* bmod = &srcmodel;
-	dmodel2_t* models2;
-	int models_count;
-	int i;
-	memset( bmod, 0, sizeof(dbspmodel_t) );
+    vbsp_header_t *header = (vbsp_header_t *) mod_base;
+    if (header->ident != VBSP_VERSION || header->version<19)
+    {
+        return false;
+    }
+    vbsp_t *vbsp = mod->vbsp_data = Mem_Calloc(mod->mempool, sizeof(vbsp_t));
+    VBSPLib_loadBSP(vbsp, mod_base,mod);
+	mod->entities = Mem_Calloc(mod->mempool, vbsp->entities_size + 1);
+	memcpy(mod->entities, vbsp->entities, vbsp->entities_size);
 
-	bmod->planes = (dplane_t*)(mod_base + header->lumps[SRC_LUMP_PLANES].fileofs);
-	bmod->numplanes = (size_t)(header->lumps[SRC_LUMP_PLANES].filelen) / sizeof(dplane_t);
+	mod->planes = Mem_Calloc(mod->mempool, vbsp->plane_count * sizeof(mplane_t));
+	for (int i = 0; i < vbsp->plane_count; i++)
+	{
+		mod->planes[i].dist = vbsp->planes[i].dist;
+		VectorCopy(vbsp->planes[i].normal,mod->planes[i].normal);
+		mod->planes[i].type = vbsp->planes[i].type;
+	}
 
-	bmod->vertexes = (dvertex_t*)(mod_base + header->lumps[SRC_LUMP_VERTICES].fileofs);
-	bmod->numvertexes = (size_t)(header->lumps[SRC_LUMP_VERTICES].filelen) / sizeof(dvertex_t);
+	mod->leafs = Mem_Calloc(mod->mempool, vbsp->leaf_count * sizeof(mleaf_t));
+	for (int i = 0; i < vbsp->leaf_count; i++)
+	{
+		mod->leafs[i].contents = -vbsp->leafs[i].contents-1;
+	}
 
-	bmod->edges = (dedge_t*)(mod_base + header->lumps[SRC_LUMP_EDGES].fileofs);
-	bmod->numedges = (size_t)(header->lumps[SRC_LUMP_EDGES].filelen) / sizeof(dedge_t);
-
-	bmod->surfedges = (dsurfedge_t*)(mod_base + header->lumps[SRC_LUMP_SURFEDGES].fileofs);
-	bmod->numsurfedges = (size_t)(header->lumps[SRC_LUMP_SURFEDGES].filelen) / sizeof(dsurfedge_t);
-
-	models2 = (dmodel2_t*)(mod_base + header->lumps[SRC_LUMP_MODELS].fileofs);
-	models_count = (header->lumps[SRC_LUMP_VERTICES].filelen) / sizeof(dmodel2_t);
-
-	bmod->numsurfaces = (header->lumps[SRC_LUMP_FACES].filelen) / sizeof(dface2_t);
-
-	bmod->numtexinfo = (header->lumps[SRC_LUMP_TEXINFO].filelen) / sizeof(dtexinfo2_t);
-
-	bmod->entdata = (byte*)(mod_base + header->lumps[SRC_LUMP_ENTITIES].fileofs);
-	bmod->entdatasize = header->lumps[SRC_LUMP_ENTITIES].filelen;
-	
-	bmod->numnodes = (header->lumps[SRC_LUMP_BSPNODES].filelen) / sizeof(dnode2_t);
-
-	bmod->numleafs = (header->lumps[SRC_LUMP_LEAFS].filelen) / sizeof(dleaf2_t);
-
-	Mod_LoadEntities(mod, bmod);
-	Mod_LoadPlanes(mod, bmod);
-	Mod_LoadSubmodels2(mod, models2, models_count,bmod->isworld);
-	Mod_LoadVertexes(mod, bmod);
-	Mod_LoadEdges(mod, bmod);
-	Mod_LoadSurfEdges(mod, bmod);
-	Mod_LoadTexInfo2(mod, bmod, (dtexinfo2_t*)(mod_base + header->lumps[SRC_LUMP_TEXINFO].fileofs));
-	Mod_LoadSurfaces2(mod, bmod, (dface2_t*)(mod_base + header->lumps[SRC_LUMP_FACES].fileofs));
-	Mod_LoadLeafs2(mod,bmod, (dleaf2_t*)(mod_base + header->lumps[SRC_LUMP_BSPNODES].fileofs));
-	Mod_LoadNodes2(mod, bmod, (dnode2_t*)(mod_base + header->lumps[SRC_LUMP_BSPNODES].fileofs));
+	mod->nodes = Mem_Calloc(mod->mempool, vbsp->node_count * sizeof(mnode_t));
+	for (int i = 0; i < vbsp->node_count; i++)
+	{
+		if (vbsp->nodes[i].children[0] >= 0)
+		{
+			mod->nodes[i].children[0] = &mod->nodes[vbsp->nodes[i].children[0]];
+		}
+		else
+		{
+			mod->nodes[i].children[0] = &mod->leafs[-vbsp->nodes[i].children[0]-1];
+		}
+		if (vbsp->nodes[i].children[1] >= 0)
+		{
+			mod->nodes[i].children[1] = &mod->nodes[vbsp->nodes[i].children[1]];
+		}
+		else
+		{
+			mod->nodes[i].children[1] = &mod->leafs[-vbsp->nodes[i].children[1] - 1];
+		}
+		mod->nodes[i].contents = 0;
+		mod->nodes[i].firstsurface = 0;
+		mod->nodes[i].plane = &mod->planes[vbsp->nodes[i].planenum];
+	}
 
 
-	return true;
+    return true;
 }
 
 /*
@@ -3687,7 +3691,7 @@ void Mod_LoadBrushModel( model_t *mod, const void *buffer, qboolean *loaded )
 	if (*magic == VBSP_VERSION) // check for the first 4 bytes, header is different in source
 	{
 		mod->type = mod_brush2;
-		if (!Mod_LoadBmodel2Lumps(mod, buffer, world.loading))
+		if (!Mod_LoadBmodelVBSPLumps(mod, buffer, world.loading))
 			return;
 	}
 	else
