@@ -1562,6 +1562,34 @@ void R_SetRenderMode( cl_entity_t *e )
 	}
 }
 
+void R_DrawBrushModel2(cl_entity_t* e)
+{
+	vbsp_t* bsp;
+	bsp = e->model->vbsp_data;
+	pglDisable(GL_TEXTURE_2D);
+	pglDisable(GL_DEPTH_TEST);
+	pglColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+	pglPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	for (int i = 0; i < bsp->face_count; i++)
+	{
+		pglBegin(GL_POLYGON);
+		for (int j = 0; j < bsp->faces[i].numedges; j++)
+		{
+			int sedge = bsp->surf_edges[bsp->faces[i].firstedge + j];
+			if (sedge < 0)
+			{
+				sedge = -sedge;
+			}
+			pglVertex3fv(bsp->vertices[bsp->edges[sedge].v[0]]);
+			pglVertex3fv(bsp->vertices[bsp->edges[sedge].v[1]]);
+		}
+		pglEnd();
+	}
+	pglPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	pglEnable(GL_DEPTH_TEST);
+	pglEnable(GL_TEXTURE_2D);
+}
+
 /*
 =================
 R_DrawBrushModel
@@ -3605,7 +3633,11 @@ void R_DrawWorld( void )
 	RI.currentmodel = RI.currententity->model;
 	if( !RI.drawWorld || RI.onlyClientDraw )
 		return;
-
+	if (RI.currentmodel->type == mod_brush2)
+	{
+		R_DrawBrushModel2(RI.currententity);
+		return;
+	}
 	VectorCopy( RI.cullorigin, tr.modelorg );
 	memset( gl_lms.lightmap_surfaces, 0, sizeof( gl_lms.lightmap_surfaces ));
 	memset( fullbright_surfaces, 0, sizeof( fullbright_surfaces ));

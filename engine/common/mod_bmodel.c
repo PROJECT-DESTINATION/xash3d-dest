@@ -3325,7 +3325,46 @@ static qboolean Mod_LoadBmodelVBSPLumps(model_t *mod, const byte *mod_base, qboo
     }
     vbsp_t *vbsp = mod->vbsp_data = Mem_Calloc(mod->mempool, sizeof(vbsp_t));
     VBSPLib_loadBSP(vbsp, mod_base,mod);
+	mod->entities = Mem_Calloc(mod->mempool, vbsp->entities_size + 1);
+	memcpy(mod->entities, vbsp->entities, vbsp->entities_size);
 
+	mod->planes = Mem_Calloc(mod->mempool, vbsp->plane_count * sizeof(mplane_t));
+	for (int i = 0; i < vbsp->plane_count; i++)
+	{
+		mod->planes[i].dist = vbsp->planes[i].dist;
+		VectorCopy(vbsp->planes[i].normal,mod->planes[i].normal);
+		mod->planes[i].type = vbsp->planes[i].type;
+	}
+
+	mod->leafs = Mem_Calloc(mod->mempool, vbsp->leaf_count * sizeof(mleaf_t));
+	for (int i = 0; i < vbsp->leaf_count; i++)
+	{
+		mod->leafs[i].contents = -vbsp->leafs[i].contents-1;
+	}
+
+	mod->nodes = Mem_Calloc(mod->mempool, vbsp->node_count * sizeof(mnode_t));
+	for (int i = 0; i < vbsp->node_count; i++)
+	{
+		if (vbsp->nodes[i].children[0] >= 0)
+		{
+			mod->nodes[i].children[0] = &mod->nodes[vbsp->nodes[i].children[0]];
+		}
+		else
+		{
+			mod->nodes[i].children[0] = &mod->leafs[-vbsp->nodes[i].children[0]-1];
+		}
+		if (vbsp->nodes[i].children[1] >= 0)
+		{
+			mod->nodes[i].children[1] = &mod->nodes[vbsp->nodes[i].children[1]];
+		}
+		else
+		{
+			mod->nodes[i].children[1] = &mod->leafs[-vbsp->nodes[i].children[1] - 1];
+		}
+		mod->nodes[i].contents = 0;
+		mod->nodes[i].firstsurface = 0;
+		mod->nodes[i].plane = &mod->planes[vbsp->nodes[i].planenum];
+	}
 
 
     return true;
