@@ -3323,6 +3323,7 @@ static qboolean Mod_LoadBmodelVBSPLumps(model_t *mod, const byte *mod_base, qboo
     {
         return false;
     }
+	Con_Printf("version: %i\n", header->version);
     vbsp_t *vbsp = mod->vbsp_data = Mem_Calloc(mod->mempool, sizeof(vbsp_t));
     VBSPLib_loadBSP(vbsp, mod_base,mod);
 	mod->entities = Mem_Calloc(mod->mempool, vbsp->entities_size + 1);
@@ -3365,7 +3366,45 @@ static qboolean Mod_LoadBmodelVBSPLumps(model_t *mod, const byte *mod_base, qboo
 		mod->nodes[i].firstsurface = 0;
 		mod->nodes[i].plane = &mod->planes[vbsp->nodes[i].planenum];
 	}
+	mod->textures = Mem_Calloc(mod->mempool, vbsp->texture_data_count * sizeof(texture_t*));
+	char texName[256];
+	char m_name_lower[256];
+	for (int i = 0; i < vbsp->texture_data_count; i++)
+	{
+		mod->textures[i] = Mem_Calloc(mod->mempool, sizeof(texture_t));
+		const char* origTexName;
+		origTexName = &vbsp->tex_string_data[vbsp->tex_string_table[vbsp->texture_data[i].nameStringTableID]];
+		Q_strnlwr(origTexName, m_name_lower, sizeof(m_name_lower));
+		Q_snprintf(texName, sizeof(texName), "materials/%s.vmt", m_name_lower);
+		Q_strncpy(mod->textures[i]->name, texName, sizeof(mod->textures[i]->name));
 
+#if !XASH_DEDICATED
+		if (!Host_IsDedicated())
+		{
+			mod->textures[i]->gl_texturenum = ref.dllFuncs.GL_LoadTexture(texName, NULL, 0, 0);;
+			mod->textures[i]->width = 128;
+			mod->textures[i]->height = 128;
+		}
+#endif // XASH_DEDICATED
+		//Con_Printf("tex: %x\n",vbsp->texture_info[i].texdata);
+	}
+
+	mod->texinfo = Mem_Calloc(mod->mempool, vbsp->texture_info_count * sizeof(mtexinfo_t));
+	for (int i = 0; i < vbsp->texture_info_count; i++)
+	{
+		mod->texinfo[i].faceinfo = 0;
+		mod->texinfo[i].flags = vbsp->texture_info[i].flags;
+		mod->texinfo[i].texture = mod->textures[vbsp->texture_info[i].texdata];
+		for (int l = 0; l < 4; l++)
+		{
+			mod->texinfo[i].vecs[0][l] = vbsp->texture_info[i].textureVecs[0][l];
+		}
+		for (int l = 0; l < 4; l++)
+		{
+			mod->texinfo[i].vecs[1][l] = vbsp->texture_info[i].textureVecs[1][l];
+		}
+		//Con_Printf("tex: %x\n",vbsp->texture_info[i].texdata);
+	}
 
     return true;
 }

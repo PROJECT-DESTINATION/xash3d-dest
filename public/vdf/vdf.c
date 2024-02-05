@@ -133,6 +133,7 @@ struct vdf_object* vdf_parse_buffer(const char* buffer, size_t size)
 					break;
 				}
 			case '.':
+			case '-':
 			case '0':
 			case '1':
 			case '2':
@@ -151,7 +152,7 @@ struct vdf_object* vdf_parse_buffer(const char* buffer, size_t size)
 
 				if (!buf)
 				{
-					if ((isdigit(*tail) || *tail == '.'))
+					if ((isdigit(*tail) || *tail == '.' || *tail == '-'))
 					{
 						buf = tail;
 					}
@@ -177,6 +178,10 @@ EndOfValue:
 						{
 							digits++;
 							isfloat = 1;
+						}
+						if (buf[i] == '-')
+						{
+							digits++;
 						}
 
 						if (isalpha(buf[i]))

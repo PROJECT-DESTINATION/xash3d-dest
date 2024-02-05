@@ -579,7 +579,7 @@ static void SV_FindTouchedLeafs( edict_t *ent, mnode_t *node, int *headnode )
 	if(( sides == 3 ) && ( *headnode == -1 ))
 		*headnode = node - sv.worldmodel->nodes;
 
-	Con_Printf("%x | %x %x\n", node, node->children[0], node->children[1]);
+	//Con_Printf("%x | %x %x\n", node, node->children[0], node->children[1]);
 	// recurse down the contacted sides
 	if( sides & 1 ) SV_FindTouchedLeafs( ent, node->children[0], headnode );
 	if( sides & 2 ) SV_FindTouchedLeafs( ent, node->children[1], headnode );
