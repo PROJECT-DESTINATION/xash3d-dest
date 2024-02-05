@@ -180,6 +180,28 @@ typedef struct
     short padding;              // padding to 4-byte boundary
 } vbsp_dleaf_t;
 
+typedef byte CompressedLightCube[24];
+
+typedef struct
+{
+    int contents;             // OR of all brushes (not needed?)
+    short cluster;              // cluster this leaf is in
+    short area: 9;               // area this leaf is in
+    short flags: 7;              // flags
+    short mins[3];              // for frustum culling
+    short maxs[3];
+    unsigned short firstleafface;        // index into leaffaces
+    unsigned short numleaffaces;
+    unsigned short firstleafbrush;       // index into leafbrushes
+    unsigned short numleafbrushes;
+    short leafWaterDataID;      // -1 for not in water
+
+    //!!! NOTE: for lump version 0 (usually in maps of version 19 or lower) uncomment the next line
+    CompressedLightCube   ambientLighting;      // Precaculated light info for entities.
+    short padding;              // padding to 4-byte boundary
+} vbsp_dleaf_old_t;
+
+
 typedef unsigned short vbsp_leaf_face_t;
 typedef unsigned short vbsp_leaf_brush_t;
 typedef struct

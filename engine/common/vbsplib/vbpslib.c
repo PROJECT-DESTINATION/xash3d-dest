@@ -25,7 +25,29 @@ void VBSPLib_loadBSP(vbsp_t *vbsp, const byte *data, model_t *mod)
     CHECK_AND_COPY(vbsp->texture_info,vbsp->texture_info_count, &vbsp->header.lumps[VBSP_LUMP_TEXINFO], data, vbsp_texinfo_t, mod);
     CHECK_AND_COPY(vbsp->faces,vbsp->face_count, &vbsp->header.lumps[VBSP_LUMP_FACES], data, vbsp_dface_t, mod);
     CHECK_AND_COPY(vbsp->orig_faces,vbsp->orig_face_count, &vbsp->header.lumps[VBSP_LUMP_ORIGINALFACES], data, vbsp_dface_t, mod);
-    CHECK_AND_COPY(vbsp->leafs,vbsp->leaf_count, &vbsp->header.lumps[VBSP_LUMP_LEAFS], data, vbsp_dleaf_t, mod);
+	if(vbsp->header.lumps[VBSP_LUMP_LEAFS].version == 0)
+	{
+		vbsp->leafs = Mem_Calloc(mod->mempool,vbsp->header.lumps[VBSP_LUMP_LEAFS].size);
+		vbsp->leaf_count = vbsp->header.lumps[VBSP_LUMP_LEAFS].size/sizeof(vbsp_dleaf_old_t);
+		const byte* lump_data = data+vbsp->header.lumps[VBSP_LUMP_EDGES].offset;
+		const vbsp_dleaf_old_t* leaf_data = lump_data;
+		for(int i = 0; i < vbsp->leaf_count; i++)
+		{
+			vbsp->leafs[i].contents = leaf_data[i].contents;
+			vbsp->leafs[i].cluster = leaf_data[i].cluster;
+			vbsp->leafs[i].area = leaf_data[i].area;
+			vbsp->leafs[i].flags = leaf_data[i].flags;
+			vbsp->leafs[i].firstleafface = leaf_data[i].firstleafface;
+			vbsp->leafs[i].numleaffaces = leaf_data[i].numleaffaces;
+			vbsp->leafs[i].firstleafbrush = leaf_data[i].firstleafbrush;
+			vbsp->leafs[i].numleafbrushes = leaf_data[i].numleafbrushes;
+			vbsp->leafs[i].leafWaterDataID = leaf_data[i].leafWaterDataID;
+		}
+	}
+	else
+	{
+		CHECK_AND_COPY(vbsp->leafs,vbsp->leaf_count, &vbsp->header.lumps[VBSP_LUMP_LEAFS], data, vbsp_dleaf_t, mod);
+	}
     CHECK_AND_COPY(vbsp->edges,vbsp->edge_count, &vbsp->header.lumps[VBSP_LUMP_EDGES], data, vbsp_dedge_t, mod);
     CHECK_AND_COPY(vbsp->surf_edges,vbsp->surf_edge_count, &vbsp->header.lumps[VBSP_LUMP_SURFEDGES], data, vbsp_surfedge_t, mod);
     CHECK_AND_COPY(vbsp->models,vbsp->model_count, &vbsp->header.lumps[VBSP_LUMP_MODELS], data, vbsp_dmodel_t, mod);
