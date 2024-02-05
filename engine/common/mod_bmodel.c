@@ -3318,6 +3318,7 @@ loading and processing bmodel, but the new engine
 */
 static qboolean Mod_LoadBmodelVBSPLumps(model_t *mod, const byte *mod_base, qboolean isworld)
 {
+	qboolean warn_about_textures = true;
     vbsp_header_t *header = (vbsp_header_t *) mod_base;
     if (header->ident != VBSP_VERSION || header->version<19)
     {
@@ -3375,9 +3376,21 @@ static qboolean Mod_LoadBmodelVBSPLumps(model_t *mod, const byte *mod_base, qboo
 		const char* origTexName;
 		origTexName = &vbsp->tex_string_data[vbsp->tex_string_table[vbsp->texture_data[i].nameStringTableID]];
 		Q_strnlwr(origTexName, m_name_lower, sizeof(m_name_lower));
-		Q_snprintf(texName, sizeof(texName), "materials/%s.vmt", m_name_lower);
-		Q_strncpy(mod->textures[i]->name, texName, sizeof(mod->textures[i]->name));
+		COM_TexNameRemoveCoords(m_name_lower);
+		if (Q_strstr(m_name_lower, "maps/") == m_name_lower)
+		{
+			Q_snprintf(texName, sizeof(texName), "materials/%s.vmt", Q_strchr(m_name_lower + 5, '/') + 1);
+			if (warn_about_textures)
+			{
+				Warning("This map uses internal materials packed into the bsp\nThe materials are used for things like custom cubemaps on surfaces\nProject Destination does not support this yet.");
+				warn_about_textures = false;
+			}
+		}
+		else
+			Q_snprintf(texName, sizeof(texName), "materials/%s.vmt", m_name_lower);
 
+		Q_strncpy(mod->textures[i]->name, texName, sizeof(mod->textures[i]->name));
+		
 #if !XASH_DEDICATED
 		if (!Host_IsDedicated())
 		{

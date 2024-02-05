@@ -1576,25 +1576,33 @@ void R_DrawBrushModel2(cl_entity_t* e)
 		mtexinfo_t* info = &e->model->texinfo[bsp->faces[i].texinfo];
 		GL_Bind(XASH_TEXTURE0, e->model->texinfo[bsp->faces[i].texinfo].texture->gl_texturenum);
 		pglBegin(GL_POLYGON);
+		int start = 0;
+		int sedge;
+		float s, t;
+		vbsp_vertex_t* vert;
 		for (int j = 0; j < bsp->faces[i].numedges; j++)
 		{
-			int sedge = bsp->surf_edges[bsp->faces[i].firstedge + j];
+			sedge = bsp->surf_edges[bsp->faces[i].firstedge + j];
 			if (sedge < 0)
 			{
 				sedge = -sedge;
+				start = 1;
 			}
-			float s, t;
-			vbsp_vertex_t* vert = &bsp->vertices[bsp->edges[sedge].v[0]];
-			s = DotProduct(*vert, info->vecs[0]);
-			t = DotProduct(*vert, info->vecs[1]);
-			pglTexCoord2f(s/512.0, t/512.0);
-			pglVertex3fv(*vert);
-			vert = &bsp->vertices[bsp->edges[sedge].v[1]];
+			else
+			{
+				start = 0;
+			}
+			vert = &bsp->vertices[bsp->edges[sedge].v[start]];
 			s = DotProduct(*vert, info->vecs[0]);
 			t = DotProduct(*vert, info->vecs[1]);
 			pglTexCoord2f(s/512.0, t/512.0);
 			pglVertex3fv(*vert);
 		}
+		vert = &bsp->vertices[bsp->edges[sedge].v[1-start]];
+		s = DotProduct(*vert, info->vecs[0]);
+		t = DotProduct(*vert, info->vecs[1]);
+		pglTexCoord2f(s / 512.0, t / 512.0);
+		pglVertex3fv(*vert);
 		pglEnd();
 	}
 	//pglPolygonMode(GL_FRONT_AND_BACK, GL_FILL);

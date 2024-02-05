@@ -48,6 +48,39 @@ qboolean Q_isdigit( const char *str )
 	return false;
 }
 
+qboolean Q_isnum(const char* str)
+{
+	if (str && *str)
+	{
+		if (*str == '-')
+		{
+			str++;
+			if (!*str)
+				return false;
+		}
+		while (isdigit(*str)) str++;
+		if (!*str) return true;
+	}
+	return false;
+}
+
+qboolean Q_isnnum(const char* str, const char* end)
+{
+	if (str && *str)
+	{
+		if (*str == '-')
+		{
+			str++;
+			if (!*str || str == end)
+				return false;
+		}
+		while (str != end && isdigit(*str)) str++;
+		if (str == end) return true;
+	}
+	return false;
+}
+
+
 qboolean Q_isspace( const char *str )
 {
 	if( str && *str )
@@ -747,6 +780,60 @@ void COM_FixSlashes( char *pname )
 			*pname = '/';
 	}
 }
+
+/*
+============
+COM_TexNameRemoveCoords
+
+Checks if a texture is formattted like this:
+   sometexname_{NUMBER}_{NUMBER}_{NUMBER}
+and changes it to
+   sometexname
+============
+*/
+void COM_TexNameRemoveCoords(char* texname)
+{
+	char* end = texname + strlen(texname);
+	char* pos = end-1;
+	while (pos != texname)
+	{
+		if (*pos == '_')
+			break;
+		--pos;
+	}
+	if (!pos || pos == texname || pos == end)
+		return;
+	if (!Q_isnnum(pos+1, end))
+		return;
+	end = pos;
+	pos--;
+
+	while (pos != texname)
+	{
+		if (*pos == '_')
+			break;
+		--pos;
+	}
+	if (!pos || pos == texname || pos == end)
+		return;
+	if (!Q_isnnum(pos + 1, end))
+		return;
+	end = pos;
+	pos--;
+
+	while (pos != texname)
+	{
+		if (*pos == '_')
+			break;
+		--pos;
+	}
+	if (!pos || pos == texname || pos == end)
+		return;
+	if (!Q_isnnum(pos + 1, end))
+		return;
+	*pos = '\x00';
+}
+
 
 /*
 ============

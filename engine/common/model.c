@@ -274,7 +274,7 @@ model_t *Mod_LoadModel( model_t *mod, qboolean crash )
 	COM_FixSlashes( tempname );
 	if (!strcmp(COM_FileExtension(tempname), "vmt"))
 	{
-		Warning("Tried loading sprite %s but sprite loading is not implemented yet.",tempname);
+		Warning("Tried loading sprite %s but vmt sprite loading is not implemented yet.",tempname);
 		return NULL;
 	}
 	buf = FS_LoadFile( tempname, &length, false );
