@@ -162,6 +162,8 @@ void Mod_UnloadTextures( model_t *mod )
 		break;
 	case mod_brush2:
 		break;
+	case mod_bad:
+		break;
 	default:
 		ASSERT( 0 );
 		break;

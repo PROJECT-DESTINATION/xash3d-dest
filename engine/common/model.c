@@ -272,7 +272,11 @@ model_t *Mod_LoadModel( model_t *mod, qboolean crash )
 	// store modelname to show error
 	Q_strncpy( tempname, mod->name, sizeof( tempname ));
 	COM_FixSlashes( tempname );
-
+	if (!strcmp(COM_FileExtension(tempname), "vmt"))
+	{
+		Warning("Tried loading sprite %s but sprite loading is not implemented yet.",tempname);
+		return NULL;
+	}
 	buf = FS_LoadFile( tempname, &length, false );
 
 	if( !buf )

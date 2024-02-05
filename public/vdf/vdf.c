@@ -252,7 +252,8 @@ EndOfValue:
 				break;
 
 			case CHAR_OPEN_CURLY_BRACKET:
-				assert(!buf);
+				if (buf)
+					break;
 				assert(o->type == VDF_TYPE_NONE);
 
 				if (o->parent && o->parent->type == VDF_TYPE_ARRAY)
@@ -271,7 +272,8 @@ EndOfValue:
 				break;
 
 			case CHAR_CLOSED_CURLY_BRACKET:
-				assert(!buf);
+				if (buf)
+					break;
 
 
 				o = o->parent;
