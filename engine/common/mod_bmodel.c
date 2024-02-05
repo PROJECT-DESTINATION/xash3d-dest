@@ -3341,10 +3341,11 @@ static qboolean Mod_LoadBmodelVBSPLumps(model_t *mod, const byte *mod_base, qboo
 	mod->leafs = Mem_Calloc(mod->mempool, vbsp->leaf_count * sizeof(mleaf_t));
 	for (int i = 0; i < vbsp->leaf_count; i++)
 	{
-		mod->leafs[i].contents = -vbsp->leafs[i].contents-1;
+		mod->leafs[i].contents = CONTENTS_SOLID;
 	}
 
 	mod->nodes = Mem_Calloc(mod->mempool, vbsp->node_count * sizeof(mnode_t));
+	mod->numnodes = vbsp->node_count;
 	for (int i = 0; i < vbsp->node_count; i++)
 	{
 		if (vbsp->nodes[i].children[0] >= 0)
@@ -3418,7 +3419,8 @@ static qboolean Mod_LoadBmodelVBSPLumps(model_t *mod, const byte *mod_base, qboo
 		}
 		//Con_Printf("tex: %x\n",vbsp->texture_info[i].texdata);
 	}
-
+	Mod_SetParent(mod->nodes, NULL);
+	Mod_MakeHull0(mod);
     return true;
 }
 
