@@ -145,18 +145,19 @@ qboolean Image_LoadVTF(const char *name, const byte *buffer, fs_offset_t filesiz
     if (header->version_mn >= 3)
     {
         VTFResourceEntryInfo_t *resources = (VTFResourceEntryInfo_t *) (buffer + sizeof(VTFFileHeader_t));
-        qboolean found_highres=false;
+        qboolean found_highres = false;
         for (int res_id = 0; res_id < header->resouce_count; ++res_id)
         {
             VTFResourceEntryInfo_t *resource = &resources[res_id];
             if (resource->tag[0] == 0x30 && resource->tag[1] == 0x00 && resource->tag[2] == 0x00)
             {
                 image_data = (byte *) (buffer + resource->offset);
-                found_highres=true;
+                found_highres = true;
                 break;
             }
         }
-        if(!found_highres){
+        if (!found_highres)
+        {
             image_data = (byte *) (buffer + header->header_size +
                                    Image_VTFMipSize(header->lowres_width,
                                                     header->lowres_height,
@@ -172,19 +173,31 @@ qboolean Image_LoadVTF(const char *name, const byte *buffer, fs_offset_t filesiz
     }
 
 
-    dword target_mip = 0;
+    image.num_mips = header->mipmap_count;
+    dword total_size = 0;
+    for (int i = 0; i < header->mipmap_count; ++i)
+    {
+        int min_size = ImageCompressed(image.type) ? 4 : 1;
+        int mip_width = max(min_size, image.width >> i);
+        int mip_height = max(min_size, image.height >> i);
+        total_size += Image_VTFMipSize(mip_width, mip_height, header->highres_format);
+    }
+    image.rgba = Mem_Malloc(host.imagepool, total_size);
+    image.size = total_size;
 
-    for (dword mip = header->mipmap_count - 1; mip > target_mip; mip--)
+    for (int mip = header->mipmap_count-1; mip >= 0; mip--)
     {
         int min_size = ImageCompressed(image.type) ? 4 : 1;
         int mip_width = max(min_size, image.width >> mip);
         int mip_height = max(min_size, image.height >> mip);
-        image_data += Image_VTFMipSize(mip_width, mip_height, header->highres_format);
+        dword mip_size = Image_VTFMipSize(mip_width, mip_height, header->highres_format);
+
+        total_size-=mip_size;
+        memcpy(image.rgba+total_size, image_data, mip_size);
+        image_data += mip_size;
 
     }
 
-    image.size = Image_VTFMipSize(image.width, image.height, header->highres_format);
-    image.rgba = Mem_Malloc(host.imagepool, image.size);
-    memcpy(image.rgba, image_data, image.size);
+
     return 1;
 }
