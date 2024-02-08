@@ -65,7 +65,7 @@ static vpk_t *VPK_Open(const char *filename)
     len = strlen(filename);
     if (len < 4)
     {
-        Con_Reportf(S_ERROR "VPK_Open: what the hell is wrong with you???? %s has less than 4 chars\n", filename);
+        Con_Reportf(S_ERROR "VPK_Open: filename(%s) is too small\n", filename);
         return 0;
     }
     Q_strncpy(vpk_prefix, filename, sizeof(vpk_prefix));
