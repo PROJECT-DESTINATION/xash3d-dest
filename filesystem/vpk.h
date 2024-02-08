@@ -5,24 +5,13 @@
 #include "const.h"
 #include "filesystem_internal.h"
 
-typedef struct VPKHeader2_s
-{
-	unsigned int sig;
-	unsigned int ver;
-	unsigned int tree_size;
-	unsigned int file_data_section_size;
-	unsigned int archive_md5_section_size;
-	unsigned int other_md5_section_size;
-	unsigned int signature_section_size;
-} VPKHeader2_t;
-
 typedef struct VPKEntry_s
 {
-	unsigned int crc;
+    dword crc;
 	word bytes;
 	word archive_index;
-	unsigned int entry_offset;
-	unsigned int entry_length;
+	dword entry_offset;
+    dword entry_length;
 
 	word terminator;
 } VPKEntry_t;
