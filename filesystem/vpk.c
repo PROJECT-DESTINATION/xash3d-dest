@@ -1,7 +1,19 @@
-#include "vpk.h"
 #include "crtlib.h"
 #include "common/com_strings.h"
 #include "map/map.h"
+#include "const.h"
+#include "filesystem_internal.h"
+
+typedef struct VPKEntry_s
+{
+    dword crc;
+    word bytes;
+    word archive_index;
+    dword entry_offset;
+    dword entry_length;
+
+    word terminator;
+} VPKEntry_t;
 
 typedef struct vpk_filepos_s
 {
@@ -15,14 +27,14 @@ typedef map_t(vpk_fileEntry_t) map_vpk_filepos_t;
 struct vpk_s
 {
     map_vpk_filepos_t file_entries;
-
     word parts_count;
     dword file_count;
-    file_t **parts; // 0 is always *_dir.vpk
-    poolhandle_t mempool;
 #ifdef XASH_REDUCE_FD
     string prefix;
+#else
+    file_t **parts; // 0 is always *_dir.vpk
 #endif
+    poolhandle_t mempool;
 };
 
 int ReadString(file_t *file, char *out, int maxlen)
@@ -53,14 +65,12 @@ static vpk_t *VPK_Open(const char *filename)
     len = strlen(filename);
     if (len < 4)
     {
-        Con_Reportf(S_ERROR "VPK_Open: filename(%s) is too small\n", filename);
+        Con_Reportf(S_ERROR "VPK_Open: what the hell is wrong with you???? %s has less than 4 chars\n", filename);
         return 0;
     }
     Q_strncpy(vpk_prefix, filename, sizeof(vpk_prefix));
     vpk_prefix[len - 4] = '\x00';
-#ifdef XASH_REDUCE_FD
-    Q_strncpy(vpk->prefix, vpk_prefix, sizeof(vpk->prefix));
-#endif
+
     Q_snprintf(buf, sizeof(buf), "%s_dir.vpk", vpk_prefix);
     if (!FS_FileExists(buf, false))
     {
@@ -83,6 +93,7 @@ static vpk_t *VPK_Open(const char *filename)
     FS_Read(vpk_dir, &sig, 4);
     if (sig != 0x55AA1234)
     {
+        FS_Close(vpk_dir);
         return 0;
     }
     word ver[2];
@@ -90,18 +101,23 @@ static vpk_t *VPK_Open(const char *filename)
     if ((ver[0] != 1 && ver[1] != 0) || (ver[0] != 2 && ver[1] != 0))
     {
         Con_DPrintf("VPK_Open: VPK version(%i, %i) is unsupported.\n", ver[0], ver[1]);
+        FS_Close(vpk_dir);
         return 0;
     }
-
+    FS_Seek(vpk_dir, 4, SEEK_CUR);
     if (ver[0] == 2 && ver[1] == 0)
     {
         FS_Seek(vpk_dir, 4 * 4, SEEK_CUR);
     }
 
+#ifdef XASH_REDUCE_FD
+    Q_strncpy(vpk->prefix, vpk_prefix, sizeof(vpk->prefix));
+#else
     vpk->parts = (file_t **) Mem_Calloc(fs_mempool, sizeof(file_t *) * (vpk->parts_count + 1));
-    vpk_dir = vpk_dir;
 
-#ifndef XASH_REDUCE_FD
+    Q_snprintf(buf, sizeof(buf), "%s_dir.vpk", vpk_prefix);
+    vpk->parts[0] = FS_Open(buf, "rb", false);
+
     for (int i = 0; i < vpk->parts_count; ++i)
     {
         Q_snprintf(buf, sizeof(buf), "%s_%03d.vpk", vpk_prefix, i);
@@ -145,6 +161,7 @@ static vpk_t *VPK_Open(const char *filename)
             }
         }
     }
+    FS_Close(vpk_dir);
     return vpk;
 }
 
@@ -225,25 +242,36 @@ static void VPK_Search(searchpath_t *search, stringlist_t *list, const char *pat
 
 static byte *VPK_LoadFile(searchpath_t *search, const char *path, int pack_ind, fs_offset_t *lumpsizeptr)
 {
-    Con_DPrintf("VPK_LoadFile(%s, %i)\n", path, pack_ind);
+    Con_DPrintf("VPK_LoadFile(%s, %s, %i)\n", search->filename, path, pack_ind);
     byte *buf;
     vpk_t *vpk = search->vpk;
     vpk_fileEntry_t *entry = map_get(&vpk->file_entries, path);
     if (!entry)
     {
+        Con_DPrintf("VPK_LoadFile(%s, %s, %i) file not found!\n", search->filename, path, pack_ind);
         return NULL;
     }
     buf = (byte *) Mem_Malloc(vpk->mempool, entry->data_size);
-#ifndef XASH_REDUCE_FD
-    file_t *part_handle = vpk->parts[entry->part_id];
-#else
+#ifdef XASH_REDUCE_FD
     string name_buf;
-    Q_snprintf(name_buf, sizeof(name_buf), "%s_%03d.vpk", search->vpk->prefix, entry->part_id-1);
+    if (entry->part_id == 0)
+    {
+        Q_snprintf(name_buf, sizeof(name_buf), "%s_dir.vpk", search->vpk->prefix);
+    } else
+    {
+        Q_snprintf(name_buf, sizeof(name_buf), "%s_%03d.vpk", search->vpk->prefix, entry->part_id - 1);
+    }
     file_t *part_handle = FS_Open(name_buf, "rb", false);
+#else
+    file_t *part_handle = vpk->parts[entry->part_id];
 #endif
     FS_Seek(part_handle, entry->data_offset, SEEK_SET);
     FS_Read(part_handle, buf, entry->data_size);
     *lumpsizeptr = entry->data_size;
+
+#ifdef XASH_REDUCE_FD
+    FS_Close(part_handle);
+#endif
     return buf;
 }
 
@@ -258,7 +286,7 @@ static file_t *VPK_OpenFile(searchpath_t *search, const char *filename, const ch
 
 static int VPK_FindFile(searchpath_t *search, const char *path, char *fixedname, size_t len)
 {
-    Con_DPrintf("VPK_FindFile(%s)\n", path);
+//    Con_DPrintf("VPK_FindFile(%s, %s)\n", search->filename, path);
     vpk_t *vpk = search->vpk;
     vpk_fileEntry_t *filepos = map_get(&vpk->file_entries, path);
     if (!filepos)
@@ -273,11 +301,13 @@ static void VPK_Close(searchpath_t *search)
 {
     Con_DPrintf("VPK_Close()\n");
     Mem_FreePool(&search->vpk->mempool);
+#ifndef XASH_REDUCE_FD
     for (int i = 0; i < search->vpk->parts_count; ++i)
     {
         FS_Close(search->vpk->parts[i]);
     }
     Mem_Free(search->vpk->parts);
+#endif
     Mem_Free(search->vpk);
 }
 
