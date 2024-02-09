@@ -1562,6 +1562,83 @@ void R_SetRenderMode( cl_entity_t *e )
 	}
 }
 
+
+void PlaneRayIntersect(vbsp_dplane_t* plane, vec3_t start, vec3_t end, vec3_t out)
+{
+	vec3_t dir;
+	VectorSubtract(end, start, dir);
+	VectorNormalize(dir);
+	float denom = DotProduct(plane->normal, dir);
+	if (denom < -1e-6)
+	{
+		float t = -(DotProduct(plane->normal, start) - plane->dist) / denom;
+		if (t > 0)
+		{
+			VectorMA(start, t, dir, out);
+			if (VectorDistance2(start, end) < VectorDistance2(start, out))
+			{
+				VectorCopy(end, out);
+			}
+			return;
+		}
+	}
+	VectorCopy(end, out);
+}
+
+void Brush2Trace(vec3_t start, vec3_t end, vbsp_t* vbsp)
+{
+	vec3_t workend, clipped;
+	VectorCopy(end, workend);
+	qboolean didhit = false;
+	mplane_t mplane;
+	qboolean inside = true;
+	vbsp_dplane_t* planehit;
+	memset(&mplane, 0, sizeof(mplane));
+	for (int b = 0; b < vbsp->brush_count; b++)
+	{
+		for (int s = 0; s < vbsp->brushes[b].numsides; s++)
+		{
+			inside = true;
+			vbsp_dplane_t* plane = &vbsp->planes[vbsp->brush_sides[vbsp->brushes[b].firstside + s].planenum];
+			mplane.dist = plane->dist;
+			VectorCopy(plane->normal, mplane.normal);
+			mplane.type = 4;
+			PlaneRayIntersect(plane, start, workend, clipped);
+			if (VectorIsNAN(clipped) || VectorCompare(clipped, workend))
+			{
+				continue;
+			}
+
+			for (int os = 0; os < vbsp->brushes[b].numsides; os++)
+			{
+				vbsp_dplane_t* dplane = &vbsp->planes[vbsp->brush_sides[vbsp->brushes[b].firstside + os].planenum];
+				if (DotProduct(dplane->normal, clipped) - dplane->dist > DIST_EPSILON)
+				{
+					inside = false;
+					break;
+				}
+			}
+			if (inside)
+			{
+				didhit = true;
+				VectorCopy(clipped, workend);
+				planehit = plane;
+				break;
+			}
+		}
+	}
+
+	if (didhit)
+	{
+		pglColor4f(1.0f, 0.0f, 1.0f, 1.0f);
+		pglBegin(GL_LINES);
+		pglVertex3fv(workend);
+		VectorMA(workend, 5.0f, planehit->normal, workend);
+		pglVertex3fv(workend);
+		pglEnd();
+	}
+}
+
 void R_DrawBrushModel2(cl_entity_t* e)
 {
 	vbsp_t* bsp;
@@ -1605,9 +1682,26 @@ void R_DrawBrushModel2(cl_entity_t* e)
 		pglVertex3fv(*vert);
 		pglEnd();
 	}
-	//pglPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-	//pglEnable(GL_DEPTH_TEST);
-	//pglEnable(GL_TEXTURE_2D);
+	/*
+	pglDisable(GL_TEXTURE_2D);
+	pglDisable(GL_DEPTH_TEST);
+	pglColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+
+	pglPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	
+	vec3_t start;
+	vec3_t end;
+	for (int k = 0; k < 2000; k++)
+	{
+		Brush2Trace(start, end, bsp);
+		
+	}
+	pglColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+	pglPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	pglEnable(GL_DEPTH_TEST);
+	pglEnable(GL_TEXTURE_2D);
+	*/
+	
 }
 
 /*

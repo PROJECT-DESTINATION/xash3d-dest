@@ -45,9 +45,56 @@ static const vec3_t pm_hullmaxs[MAX_MAP_HULLS] =
 {   0,   0,   0 },
 {  32,  32,  32 },
 };
+void PM_Brush2Trace(pmtrace_t* trace_bbox, vec3_t start, vec3_t end, physent_t* pe);
 
 void Pmove_Init( void )
 {
+	/*
+	pmtrace_t trace_bbox;
+	physent_t test;
+	model_t p;
+	test.model = &p;
+	vbsp_t bsp;
+	test.model->vbsp_data = &bsp;
+	bsp.brush_count = 1;
+	vbsp_dbrush_t brush;
+	bsp.brushes = &brush;
+	brush.firstside = 0;
+	brush.numsides = 6;
+
+	bsp.brush_sides = malloc(sizeof(vbsp_dbrushside_t) * 6);
+	bsp.planes = malloc(sizeof(vbsp_dbrushside_t) * 6);
+	bsp.brush_sides_count = 6;
+
+	bsp.brush_sides[0].planenum = 0;
+	bsp.brush_sides[1].planenum = 1;
+	bsp.brush_sides[2].planenum = 2;
+	bsp.brush_sides[3].planenum = 3;
+	bsp.brush_sides[4].planenum = 4;
+	bsp.brush_sides[5].planenum = 5;
+
+	VectorSet(bsp.planes[0].normal, -1.0, 0.0f, 0.0f);
+	VectorSet(bsp.planes[1].normal, 1.0, 0.0f, 0.0f);
+	VectorSet(bsp.planes[2].normal, 0.0, -1.0f, 0.0f);
+	VectorSet(bsp.planes[3].normal, 0.0, 1.0f, 0.0f);
+	VectorSet(bsp.planes[4].normal, 0.0, 0.0f, -1.0f);
+	VectorSet(bsp.planes[5].normal, 0.0, 0.0f, 1.0f);
+
+	bsp.planes[0].dist = 10.0f;
+	bsp.planes[1].dist = 10.0f;
+	bsp.planes[2].dist = 10.0f;
+	bsp.planes[3].dist = 10.0f;
+	bsp.planes[4].dist = 10.0f;
+	bsp.planes[5].dist = 10.0f;
+
+	vec3_t start, end;
+	VectorSet(start, 0.0f, 0.0f, -30.0f);
+	VectorSet(end, 0.0f, 0.0f, 30.0f);
+
+	PM_Brush2Trace(&trace_bbox, start, end, &test);
+	Con_Printf("%f %f %f\n", trace_bbox.endpos[0], trace_bbox.endpos[1], trace_bbox.endpos[2]);
+
+	*/
 	PM_InitBoxHull ();
 
 	// init default hull sizes
@@ -329,6 +376,217 @@ loc0:
 	return false;
 }
 
+void PlaneRayIntersect(vbsp_dplane_t* plane, vec3_t start, vec3_t end, vec3_t out)
+{
+	vec3_t dir;
+	VectorSubtract(end, start, dir);
+	VectorNormalize(dir);
+	float denom = DotProduct(plane->normal, dir);
+	if (denom < -1e-6)
+	{
+		float t = -(DotProduct(plane->normal, start) - plane->dist) / denom;
+		if (t >= 0)
+		{
+			VectorMA(start, t, dir, out);
+			if (VectorDistance2(start, end) < VectorDistance2(start, out))
+			{
+				VectorCopy(end, out);
+			}
+			return;
+		}
+	}
+	VectorCopy(end, out);
+
+	/*
+	vec3_t planeP;
+	VectorM(plane->dist, plane->normal, planeP);
+	vec3_t dir;
+	VectorSubtract(end, start, dir);
+	VectorNormalize(dir);
+	float t = (DotProduct(planeP, plane->normal) - DotProduct(start, plane->normal)) / DotProduct(dir, plane->normal);
+	VectorMA(start, t, dir, out);
+	*/
+}
+
+void PM_Brush2Trace(pmtrace_t* trace_bbox, vec3_t start, vec3_t end, physent_t* pe)
+{
+	PM_InitPMTrace(trace_bbox, end);
+	vbsp_t* vbsp = pe->model->vbsp_data;
+	vec3_t workend, clipped;
+	VectorCopy(end, workend);
+	qboolean didhit = false;
+	mplane_t mplane;
+	qboolean inside = true;
+	memset(&mplane, 0, sizeof(mplane));
+	trace_bbox->allsolid = false;
+	trace_bbox->startsolid = false;
+	for (int b = 0; b < vbsp->brush_count; b++)
+	{
+		trace_bbox->startsolid = true;
+		for (int s = 0; s < vbsp->brushes[b].numsides; s++)
+		{
+			vbsp_dplane_t* plane = &vbsp->planes[vbsp->brush_sides[vbsp->brushes[b].firstside + s].planenum];
+			PlaneRayIntersect(plane, start, workend, clipped);
+
+			if (DotProduct(plane->normal, start) - plane->dist >= 0)
+			{
+				trace_bbox->startsolid = false;
+			}
+
+			if (VectorIsNAN(clipped) || VectorCompare(clipped, workend))
+			{
+				continue;
+			}
+			
+			for (int os = 0; os < vbsp->brushes[b].numsides; os++)
+			{
+				vbsp_dplane_t* oplane = &vbsp->planes[vbsp->brush_sides[vbsp->brushes[b].firstside + os].planenum];
+				if (DotProduct(oplane->normal, clipped) - oplane->dist > DIST_EPSILON)
+				{
+					inside = false;
+					break;
+				}
+			}
+			if (inside)
+			{
+				didhit = true;
+				VectorCopy(clipped, workend);
+				VectorCopy(plane->normal, trace_bbox->plane.normal);
+				trace_bbox->plane.dist = plane->dist;
+				break;
+			}
+		}
+		if (trace_bbox->startsolid)
+		{
+			didhit = true;
+			trace_bbox->allsolid = true;
+			break;
+		}
+	}
+
+	if (didhit)
+	{
+		VectorCopy(workend, trace_bbox->endpos);
+		trace_bbox->inopen = false;
+		trace_bbox->fraction = VectorDistance(start, workend) / VectorDistance(start, end);
+		Con_Printf("%f %f %f %f\n", trace_bbox->plane.normal[0], trace_bbox->plane.normal[1], trace_bbox->plane.normal[2], trace_bbox->fraction);
+	}
+	else
+	{
+		trace_bbox->inopen = true;
+	}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	//printf("%f %f %f\n", workend[0], workend[1], workend[2]);
+	/*
+	for (int b = 0; b < vbsp->brush_count; b++)
+	{
+		qboolean inside = true;
+		vec3_t clipped;
+		
+		trace_bbox->startsolid = false;
+		trace_bbox->allsolid = false;
+		for (int s = 0; s < vbsp->brushes[b].numsides; s++)
+		{
+			inside = true;
+			vbsp_dplane_t* plane = &vbsp->planes[vbsp->brush_sides[vbsp->brushes[b].firstside + s].planenum];
+			
+
+			PlaneRayIntersect(plane, start, workend, clipped);
+			mplane.dist = plane->dist;
+			VectorCopy(plane->normal, mplane.normal);
+			VectorCopy(clipped, workend);
+			//Con_Printf("%f %f %f\n", plane->normal[0], plane->normal[1], plane->normal[2]);
+			//if (DotProduct(plane->normal, start) - plane->dist >= 0)
+			//{
+			//	trace_bbox->startsolid = false;
+			//}
+			if (VectorCompare(workend, clipped))
+			{
+				continue;
+			}
+			
+			for (int os = 0; os < vbsp->brushes[b].numsides; os++)
+			{
+				if (DotProduct(plane->normal, clipped) - plane->dist > DIST_EPSILON)
+				{
+					inside = false;
+					break;
+				}
+			}
+			if (!inside)
+			{
+				continue;
+			}
+			
+		}
+		//if (trace_bbox->startsolid)
+		//{
+		//	trace_bbox->allsolid = true;
+		//	didhit = true;
+		//	VectorCopy(start, workend);
+		//	VectorCopy(mplane.normal, trace_bbox->plane.normal);
+		//	trace_bbox->plane.dist = mplane.dist;
+		//	break;
+		//}
+		if (inside)
+		{
+			if (!VectorIsNAN(clipped) && VectorDistance2(clipped, start) <= VectorDistance2(workend, start))
+			{
+				didhit = true;
+				
+				VectorCopy(mplane.normal, trace_bbox->plane.normal);
+				trace_bbox->plane.dist = mplane.dist;
+			}
+		}
+
+
+	}
+
+	if (didhit)
+	{
+		VectorCopy(workend, trace_bbox->endpos);
+		trace_bbox->inopen = false;
+		trace_bbox->fraction = VectorDistance(start, workend) / VectorDistance(start, end);
+		Con_Printf("%f %f %f\n", trace_bbox->plane.normal[0], trace_bbox->plane.normal[1], trace_bbox->plane.normal[2]);
+	}
+	else
+	{
+		trace_bbox->inopen = true;
+	}
+	*/
+}
+
+
 pmtrace_t PM_PlayerTraceExt( playermove_t *pmove, vec3_t start, vec3_t end, int flags, int numents, physent_t *ents, int ignore_pe, pfnIgnore pmFilter )
 {
 	physent_t	*pe;
@@ -376,6 +634,14 @@ pmtrace_t PM_PlayerTraceExt( playermove_t *pmove, vec3_t start, vec3_t end, int 
 			continue;
 
 		hullcount = 1;
+
+		if (pe->model && pe->model->type == mod_brush2)
+		{
+			PM_Brush2Trace(&trace_bbox, start, end, pe);
+			
+			goto TotalTrace;
+			
+		}
 
 		if( pe->solid == SOLID_CUSTOM )
 		{
@@ -507,7 +773,7 @@ pmtrace_t PM_PlayerTraceExt( playermove_t *pmove, vec3_t start, vec3_t end, int 
 
 			trace_bbox.hitgroup = Mod_HitgroupForStudioHull( last_hitgroup );
 		}
-
+	TotalTrace:
 		if( trace_bbox.allsolid )
 			trace_bbox.startsolid = true;
 
@@ -528,7 +794,7 @@ pmtrace_t PM_PlayerTraceExt( playermove_t *pmove, vec3_t start, vec3_t end, int 
 				trace_bbox.plane.dist = DotProduct( trace_bbox.endpos, trace_bbox.plane.normal );
 			}
 		}
-
+	
 		if( trace_bbox.fraction < trace_total.fraction )
 		{
 			trace_total = trace_bbox;
